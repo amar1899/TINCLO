@@ -1,56 +1,166 @@
-# Tinderapp (backend helper)
+🚀 TINCLO — Job Swipe Platform
 
-This folder contains simple Mongoose models and a minimal Express server example for local development.
+TINCLO is a modern job discovery platform inspired by Naukri.com + Tinder swipe experience.
+It allows users to discover jobs through an intuitive swipe interface and create smart matches between candidates and opportunities.
 
-Quick start
+✨ Key Features
 
-1. Install dependencies (if you haven't already):
+🔥 Tinder-style job swiping UI
 
-```bash
-cd Tinderapp
+👤 User ↔ Job matching system
+
+📦 MERN stack architecture
+
+⚡ Fast React + Vite frontend
+
+🗄️ MongoDB Atlas integration
+
+🧪 Seed script for sample jobs
+
+🔍 RESTful API design
+
+❤️ Match tracking & apply status
+
+🏗️ Tech Stack
+
+Frontend
+
+React
+
+Vite
+
+JavaScript
+
+ESLint
+
+Backend
+
+Node.js
+
+Express.js
+
+MongoDB + Mongoose
+
+dotenv
+
+📁 Project Structure
+TINCLO/
+├── client/              # React + Vite frontend
+├── server/              # Express backend
+│   ├── models/
+│   │   ├── Job.js
+│   │   └── Match.js
+│   ├── routes/
+│   │   ├── jobs.js
+│   │   └── matches.js
+│   ├── scripts/
+│   │   └── seedJobs.js
+│   ├── .env
+│   └── server.js
+└── README.md
+
+⚙️ Getting Started
+1️⃣ Clone the Repository
+git clone <your-repo-url>
+cd TINCLO
+
+🖥️ Frontend Setup (React + Vite)
+cd client
 npm install
-npm install express mongoose
-```
+npm run dev
 
-2. (Optional) Set MongoDB URI:
 
-```bash
-set MONGO_URI=mongodb://127.0.0.1:27017/tinderapp
-```
+Frontend will run on:
 
-3. Run the server:
+http://localhost:5173
 
-```bash
-npm run start:server
-```
+🧠 Backend Setup (Express + MongoDB)
+Install Dependencies
+cd server
+npm install
 
-Endpoints
+🔐 Environment Variables
 
-- `GET /health` — health check
-- `GET /users` — list users (limit 50)
-- `POST /users` — create user (JSON body)
-- `POST /jobs` — create job (JSON body)
-- `POST /matches` — create match (JSON body: `{ "userIds": ["id1","id2"] }`)
+Create a .env file inside the server folder:
 
-Notes
+cp .env.example .env
 
-- The models are in `models/` and the server is `server/index.js`.
-- If you want a dev server restart on changes, install `nodemon` and use a script like `nodemon server/index.js`.
-# React + Vite
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Update with your MongoDB Atlas URI:
 
-Currently, two official plugins are available:
+MONGODB_URI=mongodb+srv://YOUR_USERNAME:YOUR_PASSWORD@cluster.mongodb.net/job-swipe-matcher?retryWrites=true&w=majority
+PORT=5000
+FRONTEND_URL=http://localhost:5173
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+🌱 Seed Sample Jobs (Optional)
+npm run seed
 
-## React Compiler
+▶️ Run Backend
+Development
+npm run dev
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+Production
+npm start
 
-Note: This will impact Vite dev & build performances.
 
-## Expanding the ESLint configuration
+Server runs on:
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+http://localhost:5000
+
+🔌 API Endpoints
+🧑‍💼 Jobs
+
+GET /api/jobs — Get all jobs
+
+GET /api/jobs/:id — Get single job
+
+POST /api/jobs — Create new job
+
+DELETE /api/jobs/:id — Delete job
+
+❤️ Matches
+
+GET /api/matches/user/:userId — Get user's matches
+
+POST /api/matches — Create match
+
+PUT /api/matches/:id/apply — Mark as applied
+
+DELETE /api/matches/:id — Delete match
+
+🩺 Health Check
+
+GET /api/health — Server status
+
+🧪 Testing with Postman
+Get All Jobs
+GET http://localhost:5000/api/jobs
+
+Create Match
+POST http://localhost:5000/api/matches
+Content-Type: application/json
+
+{
+  "userId": "user123",
+  "jobId": "PASTE_JOB_ID_HERE"
+}
+
+Get User Matches
+GET http://localhost:5000/api/matches/user/user123
+
+Mark as Applied
+PUT http://localhost:5000/api/matches/MATCH_ID_HERE/apply
+
+🧩 Development Notes
+
+Models are located in server/models/
+
+Routes are in server/routes/
+
+Seed script: server/scripts/seedJobs.js
+
+Uses Mongoose for schema modeling
+
+Supports MongoDB Atlas and local MongoDB
+
+🚀 Future Enhancements (Optional Ideas)
