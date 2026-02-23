@@ -66,3 +66,4 @@ export const sampleJobs = [
     location: 'Los Angeles, CA'
   }
 ];
+

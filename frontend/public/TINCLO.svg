@@ -1,0 +1,33 @@
+<svg width="960" height="590" viewBox="0 0 1920 1180" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1920" height="1180" fill="#0A1224"></rect>
+
+  <!-- Gradient Gold -->
+  <defs>
+    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#F5D06F"></stop>
+      <stop offset="100%" stop-color="#C89B2C"></stop>
+    </linearGradient>
+  </defs>
+
+  <!-- Icon Circle with Arrow (above wordmark) -->
+  <g transform="translate(960,280)">
+    <circle cx="0" cy="0" r="120" fill="none" stroke="url(#goldGradient)" stroke-width="12"></circle>
+    <line x1="0" y1="72" x2="0" y2="-72" stroke="url(#goldGradient)" stroke-width="8"></line>
+    <line x1="-24" y1="-48" x2="0" y2="-72" stroke="url(#goldGradient)" stroke-width="8"></line>
+    <line x1="24" y1="-48" x2="0" y2="-72" stroke="url(#goldGradient)" stroke-width="8"></line>
+  </g>
+
+  <!-- TINCLO Wordmark -->
+  <text x="560" y="600" font-family="Playfair Display SC, serif" font-size="240" letter-spacing="16" fill="url(#goldGradient)">
+    TINCLO
+  </text>
+
+  <!-- Divider -->
+  <line x1="640" y1="660" x2="1280" y2="660" stroke="url(#goldGradient)" stroke-width="6"></line>
+
+  <!-- Tagline -->
+  <text x="700" y="740" font-family="Montserrat, sans-serif" font-size="60" letter-spacing="12" fill="#C5C6C7">
+    TALENT MEETS OPPORTUNITY
+  </text>
+</svg>
