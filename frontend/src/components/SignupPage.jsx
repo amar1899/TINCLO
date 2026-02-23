@@ -50,9 +50,9 @@ const SignupPage = () => {
         <h2>Sign Up</h2>
         <div style={{marginBottom: '1rem', color: '#555', textAlign: 'center', fontSize: '0.95rem'}}>
           <strong>Demo credentials:</strong><br />
-          Name: <span style={{fontFamily: 'monospace'}}>Test User</span><br />
+          Name: <span style={{fontFamily: 'monospace'}}>Test</span><br />
           Email: <span style={{fontFamily: 'monospace'}}>test@example.com</span><br />
-          Password: <span style={{fontFamily: 'monospace'}}>password123</span>
+          Password: <span style={{fontFamily: 'monospace'}}>test123</span>
         </div>
         <form className="signup-form" onSubmit={handleSubmit}>
           <input
