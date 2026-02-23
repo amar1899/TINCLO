@@ -5,11 +5,10 @@ import "./Navigation.css";
 
 const NavigationLanding = () => (
   <nav className="navigation">
-    <h1>TINCLO</h1>
-    {/* <Link to="/signup" className="nav-logo">TINCLO</Link> */}
+    <Link to="/signup" className="nav-logo">Job Tinder</Link>
     <div className="nav-links">
-      {/* <Link to="/signup" className="nav-link-item">Sign Up</Link>
-      <Link to="/jobs" className="nav-link-item">Browse Jobs</Link> */}
+      <Link to="/signup" className="nav-link-item">Sign Up</Link>
+      <Link to="/jobs" className="nav-link-item">Browse Jobs</Link>
     </div>
   </nav>
 );
@@ -17,10 +16,10 @@ const NavigationLanding = () => (
     <div className="nav-logo-container">
       <Link to="/signup" className="nav-logo">Job Tinder</Link>
     </div>
-{/* 
+
     <div className="nav-links">
       <Link to="/signup" className="nav-link-item">Sign Up</Link>
       <Link to="/jobs" className="nav-link-item">Browse Jobs</Link>
-    </div> */}
+    </div>
   </nav>    
 export default NavigationLanding;
