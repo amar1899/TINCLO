@@ -32,5 +32,3 @@ export function validateAppState(state) {
     Array.isArray(state.jobs)
   );
 }
-
-
