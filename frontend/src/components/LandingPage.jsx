@@ -9,7 +9,7 @@ const LandingPage = () => (
   <>
     <NavigationLanding />
     <div className="landing-container">
-      <h1>Welcome to Job Tinder!</h1>
+      <h1>Welcome to TINCLO!</h1>
       <p>Find your dream job by swiping right.</p>
       <div className="landing-actions">
         <Link to="/signup" className="landing-btn">Sign Up</Link>
