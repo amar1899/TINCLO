@@ -1,99 +1,176 @@
 .navigation {
   background: linear-gradient(90deg, #ff5864 0%, #ffb86c 100%);
   color: #fff;
-  padding: 18px 0 18px 0;
+  padding: 18px 0;
   box-shadow: 0 4px 16px rgba(255, 88, 100, 0.10);
-
 }
 
 .nav-container {
-  max-width: 120px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 2rem;
 }
 
 .nav-logo {
   font-size: 28px;
   font-weight: 800;
   letter-spacing: 1px;
-  height: fit-content;
-  margin: 50px;
-  color: #89eded;
-  text-shadow: 0 2px 8px rgba(255, 88, 100, 0.15);
+  margin: 0;
+  color: #fff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
 }
 
-.nav-buttons {
+.nav-links {
   display: flex;
-  gap: 32px;
+  gap: 1rem;
+  flex: 1;
+  justify-content: center;
 }
 
-.nav-link-item {
-  font-size: 18px;
-  font-weight: 600;
-  height: fit-content;
-  justify-content: space-evenly;
-  align-items: space-evenly;
-  color: #1e0606;
-  padding: 8px 16px ;
-  border-radius: 8px;
-  transition: background 0.2s, color 0.2s;
-}
-.nav-link-item:hover {
-  background: rgba(255,255,255,0.18);
-  color: #ffb86c;
-}
-.nav-flex {
-  display: grid;
-  align-items: space-between;
-  gap: 100px;
-  justify-content: space-between;
-}
-
-.nav-logo-container {
-  margin-right: 48px;
-}
-
-.nav-btn {
-  background: linear-gradient(90deg, #ffb86c 0%, #ff5864 100%);
+.nav-button {
+  background: rgba(255, 255, 255, 0.2);
   color: #fff;
   padding: 10px 24px;
-  font-size: 17px;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 600;
   border: none;
   border-radius: 24px;
   cursor: pointer;
-  transition: background 0.2s, box-shadow 0.2s, color 0.2s;
+  transition: all 0.2s ease;
   position: relative;
-  box-shadow: 0 2px 8px rgba(255, 88, 100, 0.10);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.nav-btn:hover {
-  background: linear-gradient(90deg, #ffb86c 0%, #ff5864 100%);
-  color: #fffbe7;
-  box-shadow: 0 4px 16px rgba(255, 88, 100, 0.18);
+.nav-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
 }
 
-.nav-btn.active {
+.nav-button.active {
   background: #fff;
   color: #ff5864;
-  border: 2px solid #ffb86c;
-  box-shadow: 0 2px 8px rgba(255, 184, 108, 0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-.match-badge {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: #fff;
-  color: #ff5864;
-  font-size: 13px;
-  font-weight: 800;
-  padding: 4px 10px;
-  border-radius: 16px;
+.badge {
+  background: #ff5864;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
   min-width: 20px;
   text-align: center;
-  box-shadow: 0 2px 8px rgba(255, 88, 100, 0.10);
+}
+
+.nav-button.active .badge {
+  background: #fff;
+  color: #ff5864;
+}
+
+.nav-user {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+}
+
+.logout-button {
+  background: #fff;
+  color: #ff5864;
+  padding: 10px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.logout-button:hover {
+  background: #fffbe7;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.nav-link-item {
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 20px;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.nav-link-item:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.nav-link-primary {
+  font-size: 16px;
+  font-weight: 600;
+  color: #ff5864;
+  background: #fff;
+  padding: 10px 20px;
+  border-radius: 20px;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.nav-link-primary:hover {
+  background: #fffbe7;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .nav-container {
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .nav-logo {
+    font-size: 24px;
+  }
+
+  .nav-links {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .nav-user {
+    margin-left: auto;
+  }
+
+  .user-name {
+    font-size: 14px;
+    padding: 6px 12px;
+  }
+
+  .logout-button,
+  .nav-link-item,
+  .nav-link-primary {
+    font-size: 14px;
+    padding: 8px 16px;
+  }
 }

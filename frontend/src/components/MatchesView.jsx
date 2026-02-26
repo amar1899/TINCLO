@@ -59,7 +59,7 @@ export const MatchesView = ({ matches, onApply, onUndoApply, onNavigateToBrowser
                     style={{marginLeft: '0.5rem'}}
                     onClick={e => {
                       e.stopPropagation();
-                      onUndoApply(match.job.id);
+                      onUndoApply(match.id);
                     }}
                   >Undo</button>
                 </>
@@ -68,7 +68,7 @@ export const MatchesView = ({ matches, onApply, onUndoApply, onNavigateToBrowser
                   className="btn btn-apply"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onApply(match.job.id);
+                    onApply(match.id);
                   }}
                 >
                   Apply

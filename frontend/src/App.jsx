@@ -1,5 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Navigation } from './components/Navigation';
 import { JobBrowser } from './components/JobBrowser';
 import { MatchesView } from './components/MatchesView';
@@ -9,16 +9,32 @@ import ApiService from './services/ApiService';
 import MigrationService from './services/MigrationService';
 import './App.css';
 
-// Generate a temporary userId (in production, this would come from authentication)
-const USER_ID = 'user123';
-
-const stateManager = new StateManager(USER_ID, ApiService);
+// Check if user is logged in
+const getCurrentUser = () => {
+  const currentUser = localStorage.getItem('tinclo_current_user');
+  if (currentUser) {
+    try {
+      const user = JSON.parse(currentUser);
+      return user;
+    } catch (e) {
+      console.error('Error parsing current user:', e);
+    }
+  }
+  return null;
+};
 
 export const App = () => {
+  const navigate = useNavigate();
+  const [currentUser, setCurrentUser] = useState(getCurrentUser());
+  const [stateManager] = useState(() => {
+    const user = getCurrentUser();
+    return new StateManager(user ? user.id : 'guest', ApiService);
+  });
   const [state, setState] = useState(stateManager.getState());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [migrationStatus, setMigrationStatus] = useState(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
     const unsubscribe = stateManager.subscribe((newState) => {
@@ -26,7 +42,7 @@ export const App = () => {
     });
 
     return unsubscribe;
-  }, []);
+  }, [stateManager]);
 
   useEffect(() => {
     const initializeApp = async () => {
@@ -34,22 +50,28 @@ export const App = () => {
         setLoading(true);
         setError(null);
 
-        // Run migration first
-        const storageService = new StorageService();
-        const migrationResult = await MigrationService.migrateLocalStorageToDatabase(
-          USER_ID,
-          ApiService,
-          storageService
-        );
+        const user = getCurrentUser();
+        
+        if (user) {
+          // Run migration first
+          const storageService = new StorageService();
+          const migrationResult = await MigrationService.migrateLocalStorageToDatabase(
+            user.id,
+            ApiService,
+            storageService
+          );
 
-        if (!migrationResult.skipped) {
-          setMigrationStatus(migrationResult);
-          console.log('Migration completed:', migrationResult);
+          if (!migrationResult.skipped) {
+            setMigrationStatus(migrationResult);
+            console.log('Migration completed:', migrationResult);
+          }
+
+          // Load matches from API
+          await stateManager.loadMatches();
         }
 
-        // Load jobs and matches from API
+        // Load jobs from API (available to everyone)
         await stateManager.loadJobs();
-        await stateManager.loadMatches();
 
         setLoading(false);
       } catch (err) {
@@ -60,13 +82,19 @@ export const App = () => {
     };
 
     initializeApp();
-  }, []);
+  }, [stateManager]);
 
   const handleNavigate = (view) => {
     stateManager.switchView(view);
   };
 
   const handleMatch = async (job) => {
+    // Check if user is logged in
+    if (!currentUser) {
+      setShowAuthModal(true);
+      return;
+    }
+
     try {
       await stateManager.addMatch(job);
     } catch (err) {
@@ -80,6 +108,12 @@ export const App = () => {
   };
 
   const handleApply = async (jobId) => {
+    // Check if user is logged in
+    if (!currentUser) {
+      setShowAuthModal(true);
+      return;
+    }
+
     try {
       await stateManager.markAsApplied(jobId);
     } catch (err) {
@@ -95,6 +129,12 @@ export const App = () => {
       setError(err.message);
       setTimeout(() => setError(null), 5000);
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('tinclo_current_user');
+    setCurrentUser(null);
+    navigate('/');
   };
 
   if (loading) {
@@ -131,6 +171,8 @@ export const App = () => {
         currentView={state.currentView}
         matchCount={state.matches.length}
         onNavigate={handleNavigate}
+        currentUser={currentUser}
+        onLogout={handleLogout}
       />
 
       {error && (
@@ -146,6 +188,33 @@ export const App = () => {
         </div>
       )}
 
+      {showAuthModal && (
+        <div className="auth-modal-overlay" onClick={() => setShowAuthModal(false)}>
+          <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setShowAuthModal(false)}>×</button>
+            <h2>Sign Up Required</h2>
+            <p>You need to create an account to like jobs and apply for positions.</p>
+            <div className="modal-actions">
+              <button 
+                className="btn-primary" 
+                onClick={() => navigate('/signup')}
+              >
+                Create Account
+              </button>
+              <button 
+                className="btn-secondary" 
+                onClick={() => navigate('/login')}
+              >
+                Login
+              </button>
+            </div>
+            <p className="modal-footer">
+              Browse jobs freely, but sign up to save your favorites!
+            </p>
+          </div>
+        </div>
+      )}
+
       <main className="app-main">
         {state.currentView === 'browser' ? (
           <JobBrowser
@@ -154,6 +223,7 @@ export const App = () => {
             onMatch={handleMatch}
             onSkip={handleSkip}
             onNavigateToMatches={() => handleNavigate('matches')}
+            isAuthenticated={!!currentUser}
           />
         ) : (
           <MatchesView
@@ -161,10 +231,10 @@ export const App = () => {
             onApply={handleApply}
             onUndoApply={handleUndoApply}
             onNavigateToBrowser={() => handleNavigate('browser')}
+            isAuthenticated={!!currentUser}
           />
         )}
       </main>
     </div>
   );
 };
- 
