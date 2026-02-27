@@ -128,6 +128,160 @@
   font-weight: 600;
 }
 
+.applied-badge.clickable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.applied-badge.clickable:hover {
+  background: #218838;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+}
+
+.applied-badge.clickable::after {
+  content: ' ▼';
+  font-size: 10px;
+  margin-left: 4px;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.status-selected {
+  background: #28a745;
+  color: white;
+  animation: celebrate 0.5s ease;
+}
+
+.status-rejected {
+  background: #dc3545;
+  color: white;
+}
+
+@keyframes celebrate {
+  0%, 100% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(1.1) rotate(-5deg);
+  }
+  75% {
+    transform: scale(1.1) rotate(5deg);
+  }
+}
+
+.status-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: 0.5rem;
+}
+
+.status-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.5rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: 10;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.match-actions {
+  position: relative;
+}
+
+.btn-status {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-selected {
+  background: #28a745;
+  color: white;
+}
+
+.btn-selected:hover {
+  background: #218838;
+  transform: translateY(-2px);
+}
+
+.btn-rejected {
+  background: #dc3545;
+  color: white;
+}
+
+.btn-rejected:hover {
+  background: #c82333;
+  transform: translateY(-2px);
+}
+
+.match-item.status-selected {
+  border-left: 4px solid #28a745;
+}
+
+.match-item.status-rejected {
+  border-left: 4px solid #dc3545;
+  opacity: 0.8;
+}
+
+.btn-undo {
+  background: #6c757d;
+  color: white;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  animation: fadeIn 0.3s ease;
+}
+
+.btn-undo:hover {
+  background: #5a6268;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 .match-details {
   background: white;
   border-radius: 8px;

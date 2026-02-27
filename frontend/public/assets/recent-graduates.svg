@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
+  <defs>
+    <linearGradient id="gradGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect fill="url(#gradGrad)" width="600" height="400"/>
+  
+  <!-- Graduation cap -->
+  <polygon points="300,120 220,160 380,160" fill="#ffffff" opacity="0.9"/>
+  <rect x="285" y="160" width="30" height="60" fill="#ffffff" opacity="0.9"/>
+  <circle cx="300" cy="230" r="8" fill="#ffd700"/>
+  
+  <!-- Books -->
+  <rect x="200" y="250" width="40" height="60" rx="4" fill="#ffffff" opacity="0.8"/>
+  <rect x="250" y="250" width="40" height="60" rx="4" fill="#ffffff" opacity="0.8"/>
+  <rect x="300" y="250" width="40" height="60" rx="4" fill="#ffffff" opacity="0.8"/>
+  <rect x="350" y="250" width="40" height="60" rx="4" fill="#ffffff" opacity="0.8"/>
+  
+  <text x="300" y="360" font-family="Arial" font-size="28" font-weight="bold" fill="#ffffff" text-anchor="middle">Recent Graduates</text>
+</svg>

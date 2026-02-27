@@ -9,6 +9,10 @@ const LoginPage = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetError, setResetError] = useState("");
+  const [resetSuccess, setResetSuccess] = useState("");
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -68,6 +72,50 @@ const LoginPage = () => {
     }
   };
 
+  const handleForgotPassword = (e) => {
+    e.preventDefault();
+    setResetError("");
+    setResetSuccess("");
+
+    // Validate email
+    if (!resetEmail) {
+      setResetError("Please enter your email address.");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(resetEmail)) {
+      setResetError("Please enter a valid email address.");
+      return;
+    }
+
+    // Check if user exists
+    const existingUsers = JSON.parse(localStorage.getItem('tinclo_users') || '[]');
+    const user = existingUsers.find(u => u.email === resetEmail);
+
+    if (!user) {
+      setResetError("No account found with this email address.");
+      return;
+    }
+
+    // Show password (in production, you'd send a reset email)
+    setResetSuccess(`Your password is: ${user.password}`);
+    
+    // Auto-close modal after 5 seconds
+    setTimeout(() => {
+      setShowForgotPassword(false);
+      setResetEmail("");
+      setResetSuccess("");
+    }, 5000);
+  };
+
+  const closeForgotPasswordModal = () => {
+    setShowForgotPassword(false);
+    setResetEmail("");
+    setResetError("");
+    setResetSuccess("");
+  };
+
   return (
     <>
       <NavigationLanding />
@@ -108,6 +156,16 @@ const LoginPage = () => {
               />
             </div>
 
+            <div className="forgot-password-link">
+              <button 
+                type="button" 
+                onClick={() => setShowForgotPassword(true)}
+                className="forgot-link"
+              >
+                Forgot Password?
+              </button>
+            </div>
+
             {error && <div className="login-error">{error}</div>}
             {success && <div className="login-success">{success}</div>}
 
@@ -132,6 +190,50 @@ const LoginPage = () => {
             </p>
           </div>
         </div>
+
+        {/* Forgot Password Modal */}
+        {showForgotPassword && (
+          <div className="modal-overlay" onClick={closeForgotPasswordModal}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <button className="modal-close" onClick={closeForgotPasswordModal}>
+                ×
+              </button>
+              <h3>Reset Password</h3>
+              <p className="modal-description">
+                Enter your email address and we'll show you your password.
+              </p>
+              
+              <form onSubmit={handleForgotPassword}>
+                <div className="form-group">
+                  <label htmlFor="reset-email">Email Address</label>
+                  <input
+                    type="email"
+                    id="reset-email"
+                    placeholder="Enter your email"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    required
+                  />
+                </div>
+
+                {resetError && <div className="login-error">{resetError}</div>}
+                {resetSuccess && (
+                  <div className="login-success">
+                    <strong>Password Found!</strong>
+                    <br />
+                    {resetSuccess}
+                    <br />
+                    <small>This modal will close in 5 seconds...</small>
+                  </div>
+                )}
+
+                <button type="submit" className="login-button">
+                  Retrieve Password
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

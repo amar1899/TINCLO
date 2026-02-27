@@ -1,6 +1,7 @@
 // State Manager for centralized application state
 
 import ApiService from '../services/ApiService.js';
+import { sampleJobs } from '../data/sampleJobs.js';
 
 export class StateManager {
   constructor(userId, apiService = ApiService) {
@@ -68,9 +69,12 @@ export class StateManager {
         location: job.location
       }));
       this.notifyListeners();
+      console.log('✅ Loaded jobs from API');
     } catch (error) {
-      console.error('Failed to load jobs:', error);
-      throw new Error('Unable to load job listings. Please try again later.');
+      console.warn('⚠️ API unavailable, using sample jobs:', error.message);
+      // Fallback to sample jobs when API is unavailable
+      this.state.jobs = sampleJobs;
+      this.notifyListeners();
     }
   }
 
@@ -83,9 +87,12 @@ export class StateManager {
       const apiMatches = await this.apiService.fetchUserMatches(this.userId);
       this.state.matches = apiMatches.map(match => this.normalizeMatch(match));
       this.notifyListeners();
+      console.log('✅ Loaded matches from API');
     } catch (error) {
-      console.error('Failed to load matches:', error);
-      throw new Error('Unable to load your saved jobs. Please try again later.');
+      console.warn('⚠️ API unavailable, starting with empty matches:', error.message);
+      // Fallback to empty matches when API is unavailable
+      this.state.matches = [];
+      this.notifyListeners();
     }
   }
 

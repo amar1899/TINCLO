@@ -1,7 +1,7 @@
 // MatchesView Component - Displays all matched jobs
 
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './MatchesView.css';
 
 export const MatchesView = ({ matches, onApply, onUndoApply, onNavigateToBrowser }) => {
@@ -52,17 +52,7 @@ export const MatchesView = ({ matches, onApply, onUndoApply, onNavigateToBrowser
             
             <div className="match-actions">
               {match.applied ? (
-                <>
-                  <span className="applied-badge">✓ Applied</span>
-                  <button
-                    className="btn btn-undo"
-                    style={{marginLeft: '0.5rem'}}
-                    onClick={e => {
-                      e.stopPropagation();
-                      onUndoApply(match.id);
-                    }}
-                  >Undo</button>
-                </>
+                <span className="applied-badge">✓ Applied</span>
               ) : (
                 <button
                   className="btn btn-apply"
