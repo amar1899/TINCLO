@@ -1,8 +1,8 @@
-/* Benefits Section Styles */
+/* Benefits Section Styles - "Why TINCLO?" */
 .benefits-section {
   padding: 80px 3rem;
   margin-top: 60px;
-  background: rgba(198, 20, 20, 0.05);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .benefits-container {
@@ -28,24 +28,24 @@
 
 .benefits-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 2rem;
 }
 
 .benefit-card {
-  background: rgba(221, 13, 124, 0.919);
+  background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(41, 118, 144, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 16px;
   padding: 2.5rem;
   text-align: center;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  box-shadow: 0 4px 20px rgba(229, 207, 207, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
 .benefit-card:hover {
   transform: translateY(-8px);
-  box-shadow: 0 8px 32px rgba(178, 25, 25, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
 }
 
 .benefit-icon {
@@ -54,7 +54,7 @@
 }
 
 .benefit-title {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 600;
   margin-bottom: 1rem;
   color: white;
@@ -63,22 +63,16 @@
 .benefit-description {
   font-size: 1rem;
   line-height: 1.6;
-  margin-bottom: 1.5rem;
   opacity: 0.9;
   color: white;
 }
 
-.benefit-metric {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.95);
-  padding: 0.5rem 1rem;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 20px;
-  display: inline-block;
+@media (max-width: 1024px) {
+  .benefits-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .benefits-section {
     padding: 60px 1.5rem;
@@ -107,6 +101,6 @@
   }
 
   .benefit-title {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
   }
 }
