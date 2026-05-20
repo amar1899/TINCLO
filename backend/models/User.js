@@ -7,6 +7,21 @@ const userSchema = new mongoose.Schema({
     unique: true,
     index: true
   },
+  name: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  email: {
+    type: String,
+    trim: true,
+    lowercase: true,
+    default: ''
+  },
+  password: {
+    type: String,
+    default: ''
+  },
   createdAt: {
     type: Date,
     default: Date.now

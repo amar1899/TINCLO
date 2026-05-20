@@ -4,7 +4,6 @@ import "./SignupPage.css";
 import NavigationLanding from "./NavigationLanding";
 import ApiService from "../services/ApiService";
 
-
 const SignupPage = () => {
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: "", email: "", password: "" });
@@ -20,77 +19,56 @@ const SignupPage = () => {
     e.preventDefault();
     setError("");
     setSuccess("");
-    
-    // Validate form
-    if (!form.name || !form.email || !form.password) {
-      setError("All fields are required.");
-      return;
-    }
 
-    if (form.password.length < 6) {
-      setError("Password must be at least 6 characters.");
-      return;
-    }
+    const name = form.name.trim();
+    const email = form.email.trim().toLowerCase();
+    const password = form.password;
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(form.email)) {
-      setError("Please enter a valid email address.");
-      return;
-    }
+    // Validations
+    if (!name) { setError("Full name is required."); return; }
+    if (name.length < 2) { setError("Name must be at least 2 characters."); return; }
+    if (!/^[a-zA-Z\s'-]+$/.test(name)) { setError("Name can only contain letters, spaces, hyphens and apostrophes."); return; }
+    if (!email) { setError("Email address is required."); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { setError("Please enter a valid email address."); return; }
+    if (!password) { setError("Password is required."); return; }
+    if (password.length < 8) { setError("Password must be at least 8 characters long."); return; }
+    if (!/[A-Z]/.test(password)) { setError("Password must contain at least one uppercase letter."); return; }
+    if (!/[0-9]/.test(password)) { setError("Password must contain at least one number."); return; }
 
     setLoading(true);
 
     try {
-      // Generate unique user ID
-      const userId = `user-${form.email.split('@')[0]}-${Date.now()}`;
+      const userId = `user-${email.split('@')[0]}-${Date.now()}`;
 
-      // Try to save to MongoDB via API
+      // Try to save to MongoDB
       try {
-        await ApiService.createUser(userId);
+        await ApiService.registerUser({ userId, name, email, password });
         console.log('✅ User saved to MongoDB Atlas');
       } catch (apiError) {
-        console.warn('⚠️ Could not save to MongoDB (read-only connection):', apiError.message);
-        // Continue with local storage fallback
+        if (apiError.message.includes('already exists')) {
+          setError('An account with this email already exists. Please login.');
+          setLoading(false);
+          return;
+        }
+        console.warn('⚠️ MongoDB save failed, using localStorage fallback:', apiError.message);
       }
 
-      // Also save to localStorage for immediate access
+      // Save to localStorage for session management
       const existingUsers = JSON.parse(localStorage.getItem('tinclo_users') || '[]');
-      const userExists = existingUsers.find(u => u.email === form.email);
-      
+      const userExists = existingUsers.find(u => u.email === email);
       if (userExists) {
-        setError("An account with this email already exists. Please login.");
+        setError('An account with this email already exists. Please login.');
         setLoading(false);
         return;
       }
 
-      // Create new user
-      const newUser = {
-        id: userId,
-        name: form.name,
-        email: form.email,
-        password: form.password, // In production, this should be hashed
-        createdAt: new Date().toISOString()
-      };
-
-      // Save to localStorage
-      existingUsers.push(newUser);
+      existingUsers.push({ id: userId, name, email, password, createdAt: new Date().toISOString() });
       localStorage.setItem('tinclo_users', JSON.stringify(existingUsers));
+      localStorage.setItem('tinclo_current_user', JSON.stringify({ id: userId, name, email }));
 
-      // Set current user
-      localStorage.setItem('tinclo_current_user', JSON.stringify({
-        id: newUser.id,
-        name: newUser.name,
-        email: newUser.email
-      }));
-
-      setSuccess("Account created successfully! Redirecting to jobs...");
-      setForm({ name: "", email: "", password: "" });
-
-      // Redirect to jobs page after 1.5 seconds
-      setTimeout(() => {
-        navigate('/jobs');
-      }, 1500);
+      setSuccess('✅ Account created successfully! Redirecting...');
+      setForm({ name: '', email: '', password: '' });
+      setTimeout(() => navigate('/jobs'), 1500);
 
     } catch (err) {
       console.error('Signup error:', err);
@@ -109,7 +87,7 @@ const SignupPage = () => {
           <div className="shape shape-2"></div>
           <div className="shape shape-3"></div>
         </div>
-        
+
         <div className="signup-content">
           <div className="signup-card">
             <div className="signup-header">
@@ -122,7 +100,7 @@ const SignupPage = () => {
               <h2>Create Your Account</h2>
               <p>Join thousands of job seekers finding their dream careers</p>
             </div>
-            
+
             <form className="signup-form" onSubmit={handleSubmit}>
               <div className="form-group">
                 <label htmlFor="name">
@@ -132,16 +110,8 @@ const SignupPage = () => {
                   </svg>
                   Full Name
                 </label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  placeholder="Enter your full name"
-                  value={form.name}
-                  onChange={handleChange}
-                  disabled={loading}
-                  required
-                />
+                <input type="text" id="name" name="name" placeholder="Enter your full name"
+                  value={form.name} onChange={handleChange} disabled={loading} required />
               </div>
 
               <div className="form-group">
@@ -152,16 +122,8 @@ const SignupPage = () => {
                   </svg>
                   Email Address
                 </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  placeholder="Enter your email"
-                  value={form.email}
-                  onChange={handleChange}
-                  disabled={loading}
-                  required
-                />
+                <input type="email" id="email" name="email" placeholder="Enter your email"
+                  value={form.email} onChange={handleChange} disabled={loading} required />
               </div>
 
               <div className="form-group">
@@ -172,17 +134,9 @@ const SignupPage = () => {
                   </svg>
                   Password
                 </label>
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  placeholder="Create a strong password (min 6 characters)"
-                  value={form.password}
-                  onChange={handleChange}
-                  disabled={loading}
-                  required
-                  minLength={6}
-                />
+                <input type="password" id="password" name="password"
+                  placeholder="Min 8 chars, 1 uppercase, 1 number"
+                  value={form.password} onChange={handleChange} disabled={loading} required minLength={8} />
               </div>
 
               {error && (
@@ -195,7 +149,7 @@ const SignupPage = () => {
                   {error}
                 </div>
               )}
-              
+
               {success && (
                 <div className="signup-success">
                   <svg className="alert-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -208,10 +162,7 @@ const SignupPage = () => {
 
               <button type="submit" className="signup-button" disabled={loading}>
                 {loading ? (
-                  <>
-                    <span className="spinner"></span>
-                    Creating Your Account...
-                  </>
+                  <><span className="spinner"></span>Creating Your Account...</>
                 ) : (
                   <>
                     <span>Sign Up</span>
@@ -225,12 +176,7 @@ const SignupPage = () => {
             </form>
 
             <div className="signup-footer">
-              <p>
-                Already have an account?{" "}
-                <a href="/login" className="login-link">
-                  Login here
-                </a>
-              </p>
+              <p>Already have an account?{" "}<a href="/login" className="login-link">Login here</a></p>
               <div className="security-badge">
                 <svg className="lock-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="currentColor" strokeWidth="2"/>

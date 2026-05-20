@@ -8,7 +8,7 @@ export const Navigation = ({ currentView, matchCount, onNavigate, currentUser, o
   return (
     <nav className="navigation">
       <div className="nav-container">
-        <h1 className="nav-logo">💼 TINCLO</h1>
+        <Link to="/" className="nav-logo" style={{ textDecoration: 'none', color: 'inherit' }}>💼 TINCLO</Link>
         
         <div className="nav-links">
           <button

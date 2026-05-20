@@ -23,7 +23,7 @@ const LandingPage = () => {
   return (
   <div className="landing-page">
     <nav className="landing-nav">
-      <div className="nav-logo">💼 TINCLO</div>
+      <Link to="/" className="nav-logo" style={{ textDecoration: 'none', color: 'inherit' }}>💼 TINCLO</Link>
       <div className="nav-links">
         <Link to="/jobs" className="nav-link-primary" onClick={handleJobsClick}>Browse Jobs</Link>
         <Link to="/signup" className="nav-link" onClick={handleSignupClick}>Sign Up</Link>

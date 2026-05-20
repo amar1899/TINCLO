@@ -5,8 +5,7 @@ import "./Navigation.css";
 
 const NavigationLanding = () => (
   <nav className="navigation">
-
-    <div className="nav-logo">TINCLO</div>
+    <Link to="/" className="nav-logo" style={{ textDecoration: 'none', color: 'inherit' }}>TINCLO</Link>
     <div className="nav-links">
     </div>
   </nav>

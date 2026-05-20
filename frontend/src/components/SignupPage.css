@@ -594,3 +594,54 @@
   outline-offset: 4px;
   border-radius: 4px;
 }
+
+/* Password strength indicator */
+.password-strength {
+  margin-top: 6px;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.strength-bar {
+  height: 4px;
+  flex: 1;
+  border-radius: 4px;
+  background: #e2e8f0;
+  transition: background 0.3s ease;
+}
+
+.strength-bar.weak { background: #fc8181; }
+.strength-bar.medium { background: #f6ad55; }
+.strength-bar.strong { background: #48bb78; }
+
+.strength-label {
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: 6px;
+  min-width: 50px;
+}
+
+.strength-label.weak { color: #fc8181; }
+.strength-label.medium { color: #f6ad55; }
+.strength-label.strong { color: #48bb78; }
+
+/* Input validation states */
+.form-group input.input-error {
+  border-color: #fc8181;
+  background: #fff5f5;
+}
+
+.form-group input.input-success {
+  border-color: #48bb78;
+  background: #f0fff4;
+}
+
+.field-error {
+  font-size: 12px;
+  color: #e53e3e;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}

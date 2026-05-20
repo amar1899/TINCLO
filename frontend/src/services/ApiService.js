@@ -114,10 +114,27 @@ const ApiService = {
 
   // User API methods
   /**
-   * Create a new user
-   * @param {string} userId - User ID
-   * @returns {Promise<object>} - Created user object
-   * @throws {Error} - Network or HTTP error (400 if duplicate)
+   * Register a new user with full details (saves to MongoDB)
+   */
+  async registerUser({ userId, name, email, password }) {
+    return await apiFetch('/users', {
+      method: 'POST',
+      body: JSON.stringify({ userId, name, email, password }),
+    });
+  },
+
+  /**
+   * Login user via MongoDB
+   */
+  async loginUser({ email, password }) {
+    return await apiFetch('/users/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
+  },
+
+  /**
+   * Create a new user (legacy — userId only)
    */
   async createUser(userId) {
     return await apiFetch('/users', {
@@ -164,6 +181,33 @@ const ApiService = {
    */
   async checkHealth() {
     return await apiFetch('/health');
+  },
+
+  // External Jobs (JSearch - Indeed, LinkedIn, Glassdoor, Naukri)
+  /**
+   * Fetch real jobs from external portals via JSearch API
+   * @param {object} params - Search params: query, location, page
+   * @returns {Promise<object>} - { jobs: [], total, source }
+   */
+  async fetchExternalJobs({ query = 'software developer', location = 'India', page = 1 } = {}) {
+    const params = new URLSearchParams({ query, location, page });
+    return await apiFetch(`/external-jobs?${params}`);
+  },
+
+  // Job Application — submit in-app and send confirmation email
+  async applyToJob({ name, email, phone, experience, coverLetter, jobTitle, company, location, salary, jobId }) {
+    return await apiFetch('/apply', {
+      method: 'POST',
+      body: JSON.stringify({ name, email, phone, experience, coverLetter, jobTitle, company, location, salary, jobId }),
+    });
+  },
+
+  // Validate email domain (blocks disposable emails)
+  async validateEmail(email) {
+    return await apiFetch('/apply/validate-email', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
   },
 };
 

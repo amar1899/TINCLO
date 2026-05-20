@@ -23,6 +23,19 @@ const jobSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  source: {
+    type: String,
+    enum: ['Naukri', 'LinkedIn', 'Indeed', 'Glassdoor', 'Direct'],
+    default: 'Naukri'
+  },
+  applyUrl: {
+    type: String,
+    default: null
+  },
+  tags: {
+    type: [String],
+    default: []
+  },
   createdAt: {
     type: Date,
     default: Date.now

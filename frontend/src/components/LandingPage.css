@@ -54,11 +54,13 @@ html {
   font-weight: bold;
 }
 
-.nav-links {
+.landing-nav .nav-links {
   display: flex;
   justify-content: flex-end;
   gap: 1.5rem;
   align-items: center;
+  margin-left: auto;
+  flex: unset;
 }
 
 .nav-link {

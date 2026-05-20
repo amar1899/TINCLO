@@ -46,7 +46,11 @@ export class StateManager {
         company: apiMatch.jobId.company,
         description: apiMatch.jobId.description,
         salary: apiMatch.jobId.salary,
-        location: apiMatch.jobId.location
+        location: apiMatch.jobId.location,
+        applyUrl: apiMatch.jobId.applyUrl || null,
+        source: apiMatch.jobId.source || null,
+        isExternal: apiMatch.jobId.isExternal || false,
+        tags: apiMatch.jobId.tags || []
       },
       matchedAt: new Date(apiMatch.matchedAt),
       applied: apiMatch.applied
@@ -54,28 +58,13 @@ export class StateManager {
   }
 
   /**
-   * Load jobs from API
+   * Load jobs from API — skipped, all jobs come from external portals (Naukri, LinkedIn, Indeed, Glassdoor)
    * @returns {Promise<void>}
    */
   async loadJobs() {
-    try {
-      const jobs = await this.apiService.fetchJobs();
-      this.state.jobs = jobs.map(job => ({
-        id: job._id,
-        title: job.title,
-        company: job.company,
-        description: job.description,
-        salary: job.salary,
-        location: job.location
-      }));
-      this.notifyListeners();
-      console.log('✅ Loaded jobs from API');
-    } catch (error) {
-      console.warn('⚠️ API unavailable, using sample jobs:', error.message);
-      // Fallback to sample jobs when API is unavailable
-      this.state.jobs = sampleJobs;
-      this.notifyListeners();
-    }
+    // DB jobs are no longer shown — only live external jobs are displayed in JobBrowser
+    this.state.jobs = [];
+    this.notifyListeners();
   }
 
   /**
@@ -106,12 +95,16 @@ export class StateManager {
     const localMatch = {
       id: `local-${Date.now()}`,
       job: {
-        id: job.id,
+        id: job.id || job._id,
         title: job.title,
         company: job.company,
         description: job.description,
         salary: job.salary,
-        location: job.location
+        location: job.location,
+        applyUrl: job.applyUrl || null,
+        source: job.source || null,
+        isExternal: job.isExternal || false,
+        tags: job.tags || []
       },
       matchedAt: new Date(),
       applied: false

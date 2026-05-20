@@ -5,6 +5,8 @@ import dotenv from 'dotenv';
 import jobRoutes from './routes/jobs.js';
 import matchRoutes from './routes/matches.js';
 import userRoutes from './routes/users.js';
+import externalJobRoutes from './routes/externalJobs.js';
+import applyRoutes from './routes/apply.js';
 
 dotenv.config();
 
@@ -32,6 +34,8 @@ app.use(express.json());
 app.use('/api/jobs', jobRoutes);
 app.use('/api/matches', matchRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/external-jobs', externalJobRoutes);
+app.use('/api/apply', applyRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

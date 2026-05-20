@@ -224,6 +224,7 @@ export const App = () => {
             onSkip={handleSkip}
             onNavigateToMatches={() => handleNavigate('matches')}
             isAuthenticated={!!currentUser}
+            currentUser={currentUser}
           />
         ) : (
           <MatchesView
@@ -232,6 +233,7 @@ export const App = () => {
             onUndoApply={handleUndoApply}
             onNavigateToBrowser={() => handleNavigate('browser')}
             isAuthenticated={!!currentUser}
+            currentUser={currentUser}
           />
         )}
       </main>
