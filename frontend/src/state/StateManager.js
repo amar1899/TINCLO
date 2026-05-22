@@ -52,7 +52,7 @@ export class StateManager {
         isExternal: apiMatch.jobId.isExternal || false,
         tags: apiMatch.jobId.tags || []
       },
-      matchedAt: new Date(apiMatch.matchedAt),
+      matchedAt: apiMatch.matchedAt ? new Date(apiMatch.matchedAt).toISOString() : new Date().toISOString(),
       applied: apiMatch.applied
     };
   }
@@ -106,7 +106,7 @@ export class StateManager {
         isExternal: job.isExternal || false,
         tags: job.tags || []
       },
-      matchedAt: new Date(),
+      matchedAt: new Date().toISOString(),
       applied: false
     };
     

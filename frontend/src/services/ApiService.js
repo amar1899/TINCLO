@@ -117,7 +117,7 @@ const ApiService = {
    * Register a new user with full details (saves to MongoDB)
    */
   async registerUser({ userId, name, email, password }) {
-    return await apiFetch('/users', {
+    return await apiFetch('/auth/register', {
       method: 'POST',
       body: JSON.stringify({ userId, name, email, password }),
     });
@@ -207,6 +207,22 @@ const ApiService = {
     return await apiFetch('/apply/validate-email', {
       method: 'POST',
       body: JSON.stringify({ email }),
+    });
+  },
+
+  // Update user profile via backend
+  async updateProfile({ email, name, phone, location, bio }) {
+    return await apiFetch('/auth/update-profile', {
+      method: 'PUT',
+      body: JSON.stringify({ email, name, phone, location, bio }),
+    });
+  },
+
+  // Change password via backend
+  async changePassword({ email, currentPassword, newPassword }) {
+    return await apiFetch('/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ email, currentPassword, newPassword }),
     });
   },
 };

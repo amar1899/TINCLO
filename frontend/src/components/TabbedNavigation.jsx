@@ -1,6 +1,5 @@
 import { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
-import './TabbedNavigation.css';
 
 /**
  * TabbedNavigation Component
@@ -83,9 +82,13 @@ const TabbedNavigation = ({ tabs, defaultTab, onTabChange }) => {
   };
 
   return (
-    <div className="tabbed-navigation">
+    <div className="w-full mx-auto">
       {/* Tab List */}
-      <div className="tab-list" role="tablist" aria-label="Feature categories">
+      <div
+        className="flex gap-0 border-b-2 border-white/10 mb-8 overflow-x-auto [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.2)_transparent] [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:rounded-sm"
+        role="tablist"
+        aria-label="Feature categories"
+      >
         {tabs.map((tab, index) => (
           <button
             key={tab.id}
@@ -95,7 +98,15 @@ const TabbedNavigation = ({ tabs, defaultTab, onTabChange }) => {
             aria-selected={activeTab === tab.id}
             aria-controls={`tabpanel-${tab.id}`}
             tabIndex={activeTab === tab.id ? 0 : -1}
-            className={`tab ${activeTab === tab.id ? 'tab-active' : ''}`}
+            className={[
+              'flex-1 min-w-[150px] px-6 py-4 bg-transparent border-none border-b-[3px] text-base font-medium cursor-pointer transition-all duration-300 relative whitespace-nowrap',
+              'focus:outline-[2px] focus:outline-[#4a90e2] focus:-outline-offset-[2px] focus:z-10',
+              'focus:not(:focus-visible):outline-none',
+              'focus-visible:outline-[2px] focus-visible:outline-[#4a90e2] focus-visible:-outline-offset-[2px]',
+              activeTab === tab.id
+                ? 'text-white border-b-[#4a90e2] bg-[rgba(74,144,226,0.1)]'
+                : 'text-white/60 border-b-transparent hover:text-white/90 hover:bg-white/5',
+            ].join(' ')}
             onClick={() => handleTabClick(tab.id)}
             onKeyDown={(e) => handleKeyDown(e, tab.id, index)}
           >
@@ -112,7 +123,10 @@ const TabbedNavigation = ({ tabs, defaultTab, onTabChange }) => {
           id={`tabpanel-${tab.id}`}
           aria-labelledby={`tab-${tab.id}`}
           hidden={activeTab !== tab.id}
-          className={`tab-panel ${activeTab === tab.id ? 'tab-panel-active' : ''}`}
+          className={[
+            'py-8',
+            activeTab === tab.id ? 'block animate-[fadeIn_0.2s_ease-in-out]' : '',
+          ].join(' ')}
           tabIndex={0}
         >
           {activeTab === tab.id && tab.content}

@@ -5,7 +5,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { JobCard } from './JobCard';
 import ApiService from '../services/ApiService';
 import { MOCK_JOBS } from '../data/mockJobs';
-import './JobBrowser.css';
+import { trackJobView } from './AnalyticsPage';
 
 const DEFAULT_SEARCHES = [
   { query: 'software developer', location: 'India' },
@@ -13,7 +13,7 @@ const DEFAULT_SEARCHES = [
   { query: 'product manager', location: 'India' },
 ];
 
-export const JobBrowser = ({ onMatch, onSkip, onNavigateToMatches, currentUser }) => {
+export const JobBrowser = ({ onMatch, onSkip, onNavigateToMatches, currentUser, likedJobIds = [] }) => {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -88,86 +88,144 @@ export const JobBrowser = ({ onMatch, onSkip, onNavigateToMatches, currentUser }
     loadJobs(searchQuery || 'software developer', searchLocation || 'India');
   };
 
-  const currentJob = jobs[jobIndex];
-  const isComplete = !loading && jobIndex >= jobs.length;
+  // Skip over already-liked jobs
+  const getNextUnlikedIndex = (startIndex, jobList) => {
+    let idx = startIndex;
+    while (idx < jobList.length) {
+      const job = jobList[idx];
+      const jobId = job._id || job.id;
+      if (!jobId || !likedJobIds.includes(jobId)) break;
+      idx++;
+    }
+    return idx;
+  };
+
+  // Effective index skips liked jobs
+  const effectiveIndex = getNextUnlikedIndex(jobIndex, jobs);
+  const currentJob = jobs[effectiveIndex];
+  const isComplete = !loading && effectiveIndex >= jobs.length;
+
+  // Track job view whenever the current job changes
+  useEffect(() => {
+    if (currentJob) {
+      trackJobView(currentJob._id || currentJob.id);
+    }
+  }, [currentJob?._id, currentJob?.id]);
 
   const handleLike = () => {
     if (currentJob) {
       onMatch(currentJob);
-      setJobIndex(i => i + 1);
+      setJobIndex(getNextUnlikedIndex(effectiveIndex + 1, jobs));
     }
   };
 
   const handleDislike = () => {
     onSkip();
-    setJobIndex(i => i + 1);
+    setJobIndex(getNextUnlikedIndex(effectiveIndex + 1, jobs));
   };
 
   return (
-    <div className="job-browser">
-      {/* Search Bar */}
-      <div className="job-search-bar">
-        <form className="search-form" onSubmit={handleSearch}>
-          <div className="search-inputs">
-            <div className="search-input-wrap">
-              <span className="search-icon">🔍</span>
+    /* .job-browser */
+    <div className="p-5 max-w-[700px] mx-auto">
+      {/* Search Bar — .job-search-bar */}
+      <div
+        className="rounded-3xl p-6 mb-6 text-white"
+        style={{
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          boxShadow: '0 8px 30px rgba(102,126,234,0.4)',
+        }}
+      >
+        {/* .search-form */}
+        <form className="mb-4" onSubmit={handleSearch}>
+          {/* .search-inputs */}
+          <div className="flex gap-2.5 flex-wrap">
+            {/* .search-input-wrap */}
+            <div className="flex-1 min-w-[160px] flex items-center bg-white/20 border-2 border-white/30 rounded-2xl px-4 gap-2.5 backdrop-blur-md transition-all focus-within:border-white/70 focus-within:bg-white/30">
+              {/* .search-icon */}
+              <span className="text-base shrink-0">🔍</span>
+              {/* .search-input */}
               <input
-                type="text" className="search-input"
+                type="text"
+                className="flex-1 border-none bg-transparent py-3.5 text-sm text-white outline-none font-medium placeholder:text-white/70"
                 placeholder="Job title or skills (e.g. React Developer)"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <div className="search-input-wrap">
-              <span className="search-icon">📍</span>
+            {/* .search-input-wrap */}
+            <div className="flex-1 min-w-[160px] flex items-center bg-white/20 border-2 border-white/30 rounded-2xl px-4 gap-2.5 backdrop-blur-md transition-all focus-within:border-white/70 focus-within:bg-white/30">
+              {/* .search-icon */}
+              <span className="text-base shrink-0">📍</span>
+              {/* .search-input */}
               <input
-                type="text" className="search-input"
+                type="text"
+                className="flex-1 border-none bg-transparent py-3.5 text-sm text-white outline-none font-medium placeholder:text-white/70"
                 placeholder="Location (e.g. Bengaluru, India)"
                 value={searchLocation}
                 onChange={(e) => setSearchLocation(e.target.value)}
               />
             </div>
-            <button type="submit" className="search-btn" disabled={loading}>
+            {/* .search-btn */}
+            <button
+              type="submit"
+              className="py-3.5 px-6 bg-white text-[#667eea] text-sm font-extrabold border-none rounded-2xl cursor-pointer whitespace-nowrap transition-all ease-in-out shadow-[0_4px_15px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(0,0,0,0.25)] disabled:opacity-70 disabled:cursor-not-allowed"
+              disabled={loading}
+            >
               {loading ? '⏳ Loading...' : '🚀 Search Jobs'}
             </button>
           </div>
         </form>
 
-        <div className="job-sources-info">
-          <span className="source-pill" style={{ background: '#ff6b35' }}>Naukri</span>
-          <span className="source-pill" style={{ background: '#0077b5' }}>LinkedIn</span>
-          <span className="source-pill" style={{ background: '#2164f3' }}>Indeed</span>
-          <span className="source-pill" style={{ background: '#0caa41' }}>Glassdoor</span>
-          <span className="source-label">— Jobs from top portals</span>
+        {/* .job-sources-info */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* .source-pill */}
+          <span className="text-white text-[11px] font-bold py-[3px] px-2.5 rounded-xl" style={{ background: '#ff6b35' }}>Naukri</span>
+          <span className="text-white text-[11px] font-bold py-[3px] px-2.5 rounded-xl" style={{ background: '#0077b5' }}>LinkedIn</span>
+          <span className="text-white text-[11px] font-bold py-[3px] px-2.5 rounded-xl" style={{ background: '#2164f3' }}>Indeed</span>
+          <span className="text-white text-[11px] font-bold py-[3px] px-2.5 rounded-xl" style={{ background: '#0caa41' }}>Glassdoor</span>
+          {/* .source-label */}
+          <span className="text-xs text-slate-400">— Jobs from top portals</span>
         </div>
 
+        {/* .fallback-notice */}
         {usingFallback && (
-          <div className="fallback-notice">
+          <div className="mt-2.5 px-3.5 py-2 bg-white/20 rounded-[10px] text-xs text-white/90 font-medium">
             📋 Showing {jobs.length} curated jobs · Start backend server for live jobs
           </div>
         )}
       </div>
 
-      {/* Loading */}
+      {/* Loading — .external-loading */}
       {loading && (
-        <div className="external-loading">
-          <div className="loading-spinner-small"></div>
+        <div className="flex flex-col items-center gap-3 py-10 px-5 text-slate-500 text-[15px]">
+          {/* .loading-spinner-small */}
+          <div className="w-9 h-9 border-[3px] border-slate-200 border-t-[#667eea] rounded-full animate-spin"></div>
           <p>Fetching latest jobs from Naukri, LinkedIn, Indeed, Glassdoor...</p>
         </div>
       )}
 
-      {/* All done */}
+      {/* All done — .job-browser-complete */}
       {!loading && isComplete && (
-        <div className="job-browser-complete" data-testid="completion-message">
-          <div className="complete-card">
-            <h2>🎉 All Done!</h2>
-            <p>You've reviewed all {jobs.length} job postings.</p>
-            <div className="complete-actions">
-              <button className="btn btn-primary" onClick={onNavigateToMatches}>
+        <div className="flex items-center justify-center min-h-[400px] p-5" data-testid="completion-message">
+          {/* .complete-card */}
+          <div className="bg-white rounded-[20px] shadow-[0_8px_30px_rgba(0,0,0,0.1)] p-12 text-center max-w-[500px]">
+            <h2 className="text-[32px] font-bold mt-0 mb-4 text-[#333]">🎉 All Done!</h2>
+            <p className="text-lg text-[#666] mt-0 mb-8">You've reviewed all {jobs.length} job postings.</p>
+            {/* .complete-actions */}
+            <div className="flex gap-3 justify-center flex-wrap">
+              {/* .btn-primary */}
+              <button
+                className="text-white py-3.5 px-8 text-base font-semibold border-none rounded-xl cursor-pointer transition-all ease-in-out shadow-[0_4px_12px_rgba(102,126,234,0.35)] hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(102,126,234,0.45)]"
+                style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
+                onClick={onNavigateToMatches}
+              >
                 View Your Matches
               </button>
-              <button className="btn btn-secondary-action"
-                onClick={() => { setJobs(MOCK_JOBS); setJobIndex(0); }}>
+              {/* .btn-secondary-action */}
+              <button
+                className="bg-white text-[#667eea] py-3.5 px-8 text-base font-semibold border-2 border-[#667eea] rounded-xl cursor-pointer transition-all ease-in-out hover:bg-[#f0f4ff] hover:-translate-y-0.5"
+                onClick={() => { setJobs(MOCK_JOBS); setJobIndex(0); }}
+              >
                 🔄 Browse Again
               </button>
             </div>
@@ -178,9 +236,13 @@ export const JobBrowser = ({ onMatch, onSkip, onNavigateToMatches, currentUser }
       {/* Job card */}
       {!loading && !isComplete && currentJob && (
         <>
-          <div className="job-counter">
-            Job {jobIndex + 1} of {jobs.length}
-            {!usingFallback && <span className="live-badge">🟢 Live</span>}
+          {/* .job-counter */}
+          <div className="text-center text-sm text-[#666] mb-4 font-medium flex items-center justify-center gap-2">
+            Job {effectiveIndex + 1} of {jobs.length}
+            {/* .live-badge */}
+            {!usingFallback && (
+              <span className="text-xs bg-[#e6ffed] text-[#276749] py-0.5 px-2.5 rounded-xl font-semibold">🟢 Live</span>
+            )}
           </div>
           <JobCard
             job={currentJob}

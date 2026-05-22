@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import ApiService from '../services/ApiService';
-import './MatchesView.css';
 
 const SOURCE_CONFIG = {
   'Naukri':    { color: '#ff6b35', label: 'Naukri' },
@@ -23,8 +22,8 @@ const getConfig = (job) => {
   return SOURCE_CONFIG['Naukri'];
 };
 
-// ── In-app Apply Modal (same as JobCard) ──
-const ApplyModal = ({ job, onClose, currentUser }) => {
+// ── In-app Apply Modal ──
+const ApplyModal = ({ job, onClose, currentUser, onApply }) => {
   const [form, setForm] = useState({
     name: currentUser?.name || '',
     email: currentUser?.email || '',
@@ -57,6 +56,7 @@ const ApplyModal = ({ job, onClose, currentUser }) => {
         jobId: job._id || job.id,
       });
       setSuccess(result.message || 'Application submitted!');
+      if (onApply) onApply(job.id || job._id);
       if (result.previewUrl) setPreviewUrl(result.previewUrl);
     } catch (err) {
       setError(err.message || 'Failed to submit. Please try again.');
@@ -66,51 +66,103 @@ const ApplyModal = ({ job, onClose, currentUser }) => {
   };
 
   return (
-    <div className="apply-modal-overlay" onClick={onClose}>
-      <div className="apply-modal" onClick={(e) => e.stopPropagation()}>
-        <button className="apply-modal-close" onClick={onClose}>×</button>
-        <div className="apply-modal-header">
-          <h2>Apply for {job.title}</h2>
-          <p>at <strong>{job.company}</strong> · {job.location}</p>
+    /* apply-modal-overlay */
+    <div
+      className="fixed inset-0 bg-black/65 flex items-center justify-center z-[2000] p-5 backdrop-blur-sm animate-fade-in"
+      onClick={onClose}
+    >
+      {/* apply-modal */}
+      <div
+        className="bg-white rounded-3xl w-full max-w-[580px] max-h-[90vh] overflow-y-auto shadow-[0_30px_80px_rgba(0,0,0,0.4)] relative animate-slide-up"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* apply-modal-close */}
+        <button
+          className="absolute top-4 right-4 bg-gray-50 border-none text-2xl text-gray-500 cursor-pointer w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 z-10 hover:bg-gray-100 hover:text-gray-700 hover:rotate-90"
+          onClick={onClose}
+        >×</button>
+
+        {/* apply-modal-header */}
+        <div
+          className="px-8 pt-7 pb-6 rounded-t-3xl"
+          style={{ background: 'linear-gradient(135deg, #667eea, #764ba2)' }}
+        >
+          <h2 className="text-white text-xl font-extrabold m-0 mb-1.5">Apply for {job.title}</h2>
+          <p className="text-white/85 text-sm m-0">at <strong>{job.company}</strong> · {job.location}</p>
         </div>
 
         {success ? (
-          <div className="apply-success-state">
-            <div className="apply-success-icon">✅</div>
-            <h3>Application Submitted!</h3>
-            <p>{success}</p>
+          /* apply-success-state */
+          <div className="px-8 py-10 text-center flex flex-col items-center gap-3">
+            {/* apply-success-icon */}
+            <div className="text-[56px]">✅</div>
+            <h3 className="text-[22px] font-extrabold text-green-900 m-0">Application Submitted!</h3>
+            <p className="text-gray-600 m-0 text-[15px]">{success}</p>
             {previewUrl ? (
-              <div className="apply-preview-box">
-                <p className="apply-success-note">📧 Click to view your confirmation email:</p>
-                <a href={previewUrl} target="_blank" rel="noopener noreferrer" className="apply-preview-link">
-                  📬 View Confirmation Email
-                </a>
+              /* apply-preview-box */
+              <div className="bg-indigo-50 rounded-xl px-5 py-4 text-center w-full">
+                <p className="text-[13px] text-gray-500 m-0">📧 Click to view your confirmation email:</p>
+                {/* apply-preview-link */}
+                <a
+                  href={previewUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block mt-2 px-6 py-3 text-white font-bold text-sm rounded-xl no-underline transition-all duration-200 shadow-[0_4px_12px_rgba(102,126,234,0.4)] hover:-translate-y-0.5 hover:shadow-[0_6px_18px_rgba(102,126,234,0.5)]"
+                  style={{ background: 'linear-gradient(135deg, #667eea, #764ba2)' }}
+                >📬 View Confirmation Email</a>
               </div>
             ) : (
-              <p className="apply-success-note">Confirmation sent to <strong>{form.email}</strong></p>
+              /* apply-success-note */
+              <p className="text-[13px] text-gray-400 m-0">Confirmation sent to <strong>{form.email}</strong></p>
             )}
-            <button className="apply-submit-btn" onClick={onClose}>Close</button>
+            {/* apply-submit-btn (close) */}
+            <button
+              className="w-full py-3.5 text-white text-[15px] font-bold border-none rounded-xl cursor-pointer transition-all duration-200 flex items-center justify-center gap-2 shadow-[0_4px_15px_rgba(102,126,234,0.4)] hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(102,126,234,0.5)] disabled:opacity-60 disabled:cursor-not-allowed"
+              style={{ background: 'linear-gradient(135deg, #667eea, #764ba2)' }}
+              onClick={onClose}
+            >Close</button>
           </div>
         ) : (
-          <form className="apply-form" onSubmit={handleSubmit}>
-            <div className="apply-form-row">
-              <div className="apply-form-group">
-                <label>Full Name *</label>
-                <input type="text" name="name" value={form.name} onChange={handleChange} placeholder="Your full name" required disabled={loading} />
+          /* apply-form */
+          <form className="px-8 py-7 flex flex-col gap-[18px]" onSubmit={handleSubmit}>
+            {/* apply-form-row */}
+            <div className="grid grid-cols-2 gap-4 max-[560px]:grid-cols-1">
+              {/* apply-form-group */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-bold text-gray-700">Full Name *</label>
+                <input
+                  type="text" name="name" value={form.name} onChange={handleChange}
+                  placeholder="Your full name" required disabled={loading}
+                  className="px-3.5 py-[11px] border-2 border-gray-200 rounded-[10px] text-sm text-gray-700 bg-gray-50 transition-all duration-200 font-[inherit] outline-none focus:border-indigo-400 focus:bg-white focus:shadow-[0_0_0_3px_rgba(102,126,234,0.1)]"
+                />
               </div>
-              <div className="apply-form-group">
-                <label>Email Address *</label>
-                <input type="email" name="email" value={form.email} onChange={handleChange} placeholder="your@email.com" required disabled={loading} />
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-bold text-gray-700">Email Address *</label>
+                <input
+                  type="email" name="email" value={form.email} onChange={handleChange}
+                  placeholder="your@email.com" required disabled={loading}
+                  className="px-3.5 py-[11px] border-2 border-gray-200 rounded-[10px] text-sm text-gray-700 bg-gray-50 transition-all duration-200 font-[inherit] outline-none focus:border-indigo-400 focus:bg-white focus:shadow-[0_0_0_3px_rgba(102,126,234,0.1)]"
+                />
               </div>
             </div>
-            <div className="apply-form-row">
-              <div className="apply-form-group">
-                <label>Phone Number</label>
-                <input type="tel" name="phone" value={form.phone} onChange={handleChange} placeholder="+91 98765 43210" disabled={loading} />
+
+            {/* apply-form-row */}
+            <div className="grid grid-cols-2 gap-4 max-[560px]:grid-cols-1">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-bold text-gray-700">Phone Number</label>
+                <input
+                  type="tel" name="phone" value={form.phone} onChange={handleChange}
+                  placeholder="+91 98765 43210" disabled={loading}
+                  className="px-3.5 py-[11px] border-2 border-gray-200 rounded-[10px] text-sm text-gray-700 bg-gray-50 transition-all duration-200 font-[inherit] outline-none focus:border-indigo-400 focus:bg-white focus:shadow-[0_0_0_3px_rgba(102,126,234,0.1)]"
+                />
               </div>
-              <div className="apply-form-group">
-                <label>Years of Experience *</label>
-                <select name="experience" value={form.experience} onChange={handleChange} required disabled={loading}>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-bold text-gray-700">Years of Experience *</label>
+                <select
+                  name="experience" value={form.experience} onChange={handleChange}
+                  required disabled={loading}
+                  className="px-3.5 py-[11px] border-2 border-gray-200 rounded-[10px] text-sm text-gray-700 bg-gray-50 transition-all duration-200 font-[inherit] outline-none focus:border-indigo-400 focus:bg-white focus:shadow-[0_0_0_3px_rgba(102,126,234,0.1)]"
+                >
                   <option value="">Select experience</option>
                   <option value="Fresher (0 years)">Fresher (0 years)</option>
                   <option value="0-1 years">0-1 years</option>
@@ -122,15 +174,43 @@ const ApplyModal = ({ job, onClose, currentUser }) => {
                 </select>
               </div>
             </div>
-            <div className="apply-form-group">
-              <label>Cover Letter</label>
-              <textarea name="coverLetter" value={form.coverLetter} onChange={handleChange} rows={4} placeholder="Tell us why you're a great fit..." disabled={loading} />
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[13px] font-bold text-gray-700">Cover Letter</label>
+              <textarea
+                name="coverLetter" value={form.coverLetter} onChange={handleChange}
+                rows={4} placeholder="Tell us why you're a great fit..." disabled={loading}
+                className="px-3.5 py-[11px] border-2 border-gray-200 rounded-[10px] text-sm text-gray-700 bg-gray-50 transition-all duration-200 font-[inherit] outline-none resize-y min-h-[100px] focus:border-indigo-400 focus:bg-white focus:shadow-[0_0_0_3px_rgba(102,126,234,0.1)]"
+              />
             </div>
-            {error && <div className="apply-error">⚠️ {error}</div>}
-            <button type="submit" className="apply-submit-btn" disabled={loading}>
-              {loading ? <><span className="apply-spinner"></span>Submitting...</> : '🚀 Apply Now — via TINCLO'}
+
+            {/* apply-error */}
+            {error && (
+              <div className="bg-red-100 text-red-700 px-4 py-3 rounded-[10px] text-[13px] font-medium border-l-4 border-red-400">
+                ⚠️ {error}
+              </div>
+            )}
+
+            {/* apply-submit-btn */}
+            <button
+              type="submit"
+              className="w-full py-3.5 text-white text-[15px] font-bold border-none rounded-xl cursor-pointer transition-all duration-200 flex items-center justify-center gap-2 shadow-[0_4px_15px_rgba(102,126,234,0.4)] enabled:hover:-translate-y-0.5 enabled:hover:shadow-[0_8px_25px_rgba(102,126,234,0.5)] disabled:opacity-60 disabled:cursor-not-allowed"
+              style={{ background: 'linear-gradient(135deg, #667eea, #764ba2)' }}
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  {/* apply-spinner */}
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Submitting...
+                </>
+              ) : '🚀 Apply Now — via TINCLO'}
             </button>
-            <p className="apply-email-note">📧 A confirmation email will be sent upon submission.</p>
+
+            {/* apply-email-note */}
+            <p className="text-xs text-gray-400 text-center m-0">
+              📧 A confirmation email will be sent upon submission.
+            </p>
           </form>
         )}
       </div>
@@ -145,11 +225,19 @@ export const MatchesView = ({ matches, onApply, onUndoApply, onNavigateToBrowser
 
   if (matches.length === 0) {
     return (
-      <div className="matches-empty" data-testid="empty-matches">
-        <div className="empty-card">
-          <h2>No Matches Yet</h2>
-          <p>Start browsing jobs and like the ones you're interested in!</p>
-          <button className="btn btn-primary" onClick={onNavigateToBrowser}>Browse Jobs</button>
+      /* matches-empty */
+      <div className="flex items-center justify-center min-h-[400px] p-5" data-testid="empty-matches">
+        {/* empty-card */}
+        <div className="bg-white rounded-xl shadow-[0_4px_6px_rgba(0,0,0,0.1)] p-12 text-center max-w-[500px] flex flex-col items-center">
+          <h2 className="text-[32px] font-bold m-0 mb-4 text-gray-800">No Matches Yet</h2>
+          <p className="text-lg text-gray-500 m-0 mb-8">Start browsing jobs and like the ones you're interested in!</p>
+          <button
+            className="py-3.5 px-8 text-base font-semibold text-white border-none rounded-xl cursor-pointer transition-all shadow-[0_4px_12px_rgba(102,126,234,0.35)] hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(102,126,234,0.45)]"
+            style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
+            onClick={onNavigateToBrowser}
+          >
+            Browse Jobs
+          </button>
         </div>
       </div>
     );
@@ -160,55 +248,111 @@ export const MatchesView = ({ matches, onApply, onUndoApply, onNavigateToBrowser
     : null;
 
   return (
-    <div className="matches-view">
-      <div className="matches-header">
-        <h2>Your Matches ({matches.length})</h2>
+    /* matches-view */
+    <div className="px-6 py-6 max-w-[1000px] mx-auto">
+      {/* matches-header */}
+      <div
+        className="mb-7 px-7 py-6 rounded-2xl text-white shadow-[0_8px_25px_rgba(102,126,234,0.4)]"
+        style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
+      >
+        <h2 className="text-[28px] font-extrabold text-white m-0">Your Matches ({matches.length})</h2>
       </div>
 
-      <div className="matches-list">
+      {/* matches-list */}
+      <div className="grid gap-4 mb-6">
         {matches.map((match) => {
           const jobId = match.job.id || match.job._id;
           const cfg = getConfig(match.job);
+          const isSelected = selectedMatchId === jobId;
 
           return (
+            /* match-item */
             <div
               key={jobId}
-              className={`match-item ${selectedMatchId === jobId ? 'selected' : ''}`}
+              className={[
+                'bg-white rounded-2xl shadow-[0_4px_15px_rgba(0,0,0,0.08)] px-6 py-5 flex justify-between items-center cursor-pointer transition-all duration-[250ms] border-2 relative overflow-hidden',
+                'hover:shadow-[0_8px_30px_rgba(0,0,0,0.15)] hover:-translate-y-0.5',
+                isSelected
+                  ? 'border-[#667eea] shadow-[0_8px_30px_rgba(102,126,234,0.2)]'
+                  : 'border-transparent hover:border-indigo-100',
+                'max-sm:flex-col max-sm:gap-3',
+              ].join(' ')}
               onClick={() => setSelectedMatchId(prev => prev === jobId ? null : jobId)}
               data-testid="match-item"
             >
-              <div className="match-left">
-                <div className="match-company-logo"
-                  style={{ background: `linear-gradient(135deg, ${cfg.color}, #764ba2)` }}>
+              {/* Left border strip — replaces ::before pseudo-element */}
+              <div
+                className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl"
+                style={{ background: 'linear-gradient(135deg, #667eea, #764ba2)' }}
+              />
+
+              {/* match-left */}
+              <div className="flex items-start gap-3.5 flex-1 min-w-0 pl-1">
+                {/* match-company-logo */}
+                <div
+                  className="w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold text-white flex-shrink-0 shadow-[0_3px_10px_rgba(0,0,0,0.15)]"
+                  style={{ background: `linear-gradient(135deg, ${cfg.color}, #764ba2)` }}
+                >
                   {match.job.company.charAt(0).toUpperCase()}
                 </div>
-                <div className="match-info">
-                  <div className="match-title-row">
-                    <h3 className="match-title">{match.job.title}</h3>
-                    <span className="match-source-badge" style={{ background: cfg.color }}>{cfg.label}</span>
+
+                {/* match-info */}
+                <div className="flex-1 min-w-0">
+                  {/* match-title-row */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {/* match-title */}
+                    <h3 className="text-xl font-semibold text-gray-800 m-0">{match.job.title}</h3>
+                    {/* match-source-badge */}
+                    <span
+                      className="text-white text-[10px] font-bold px-2 py-0.5 rounded-[10px] whitespace-nowrap"
+                      style={{ background: cfg.color }}
+                    >{cfg.label}</span>
                   </div>
-                  <p className="match-company">{match.job.company}</p>
-                  <p className="match-location">📍 {match.job.location}</p>
-                  {match.job.salary && <p className="match-salary">💰 {match.job.salary}</p>}
+                  {/* match-company */}
+                  <p className="text-base text-gray-500 m-0 mt-0.5">{match.job.company}</p>
+                  {/* match-location */}
+                  <p className="text-sm text-gray-400 m-0 mt-0.5">📍 {match.job.location}</p>
+                  {/* match-salary */}
+                  {match.job.salary && (
+                    <p className="text-[13px] text-green-500 font-semibold m-0 mt-0.5">💰 {match.job.salary}</p>
+                  )}
+                  {/* match-tags */}
                   {match.job.tags?.length > 0 && (
-                    <div className="match-tags">
+                    <div className="flex gap-1.5 flex-wrap mt-1.5">
                       {match.job.tags.slice(0, 3).map((tag, i) => (
-                        <span key={i} className="match-tag">{tag}</span>
+                        /* match-tag */
+                        <span
+                          key={i}
+                          className="text-indigo-600 px-2.5 py-0.5 rounded-xl text-[11px] font-semibold border border-indigo-200"
+                          style={{ background: 'linear-gradient(135deg, #e0e7ff, #f3e8ff)' }}
+                        >{tag}</span>
                       ))}
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* Apply Now button — same style as JobCard */}
-              <div className="match-actions" onClick={(e) => e.stopPropagation()}>
-                <button
-                  className="match-apply-now-btn"
-                  onClick={(e) => { e.stopPropagation(); setApplyJob(match.job); }}
-                  aria-label={`Apply for ${match.job.title}`}
-                >
-                  🚀 Apply Now — via TINCLO
-                </button>
+              {/* match-actions */}
+              <div
+                className="flex flex-col items-end gap-2 ml-4 flex-shrink-0 max-sm:ml-0 max-sm:flex-row max-sm:flex-wrap max-sm:w-full"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {match.applied ? (
+                  /* match-status-badge applied */
+                  <div className="px-4 py-2 rounded-[20px] text-[13px] font-bold whitespace-nowrap bg-green-100 text-green-800 border border-green-300">
+                    ✅ Applied
+                  </div>
+                ) : (
+                  /* match-apply-now-btn */
+                  <button
+                    className="block px-[22px] py-3 text-white text-sm font-bold border-none rounded-[14px] cursor-pointer whitespace-nowrap transition-all duration-[250ms] shadow-[0_4px_14px_rgba(102,126,234,0.4)] text-center tracking-[0.3px] hover:-translate-y-[3px] hover:shadow-[0_8px_20px_rgba(102,126,234,0.5)] active:-translate-y-px"
+                    style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
+                    onClick={(e) => { e.stopPropagation(); setApplyJob(match.job); }}
+                    aria-label={`Apply for ${match.job.title}`}
+                  >
+                    🚀 Apply Now — via TINCLO
+                  </button>
+                )}
               </div>
             </div>
           );
@@ -219,35 +363,56 @@ export const MatchesView = ({ matches, onApply, onUndoApply, onNavigateToBrowser
       {selectedMatch && (() => {
         const cfg = getConfig(selectedMatch.job);
         return (
-          <div className="match-details" data-testid="match-details">
-            <div className="detail-header">
+          /* match-details */
+          <div className="bg-white rounded-xl shadow-[0_2px_4px_rgba(0,0,0,0.1)] p-6 mt-6" data-testid="match-details">
+            {/* detail-header */}
+            <div className="flex justify-between items-start gap-4 mb-4 pb-4 border-b-2 border-gray-100 flex-wrap">
               <div>
-                <h3>{selectedMatch.job.title}</h3>
-                <p className="detail-company">{selectedMatch.job.company}</p>
+                {/* detail-header h3 */}
+                <h3 className="text-[22px] font-bold text-gray-800 m-0 mb-1">{selectedMatch.job.title}</h3>
+                {/* detail-company */}
+                <p className="text-lg text-gray-500 m-0">{selectedMatch.job.company}</p>
               </div>
+              {/* match-apply-now-btn in detail header */}
               <button
-                className="match-apply-now-btn"
+                className="flex-shrink-0 block px-[22px] py-3 text-white text-sm font-bold border-none rounded-[14px] cursor-pointer whitespace-nowrap transition-all duration-[250ms] shadow-[0_4px_14px_rgba(102,126,234,0.4)] text-center tracking-[0.3px] hover:-translate-y-[3px] hover:shadow-[0_8px_20px_rgba(102,126,234,0.5)] active:-translate-y-px"
+                style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
                 onClick={() => setApplyJob(selectedMatch.job)}
               >
                 🚀 Apply Now — via TINCLO
               </button>
             </div>
-            <div className="detail-section">
-              <div className="detail-info">
+
+            <div>
+              {/* detail-info */}
+              <div className="flex gap-6 mb-4 text-sm flex-wrap">
                 <span><strong>📍 Location:</strong> {selectedMatch.job.location}</span>
                 <span><strong>💰 Salary:</strong> {selectedMatch.job.salary}</span>
               </div>
+
+              {/* detail-tags */}
               {selectedMatch.job.tags?.length > 0 && (
-                <div className="detail-tags">
-                  {selectedMatch.job.tags.map((tag, i) => <span key={i} className="match-tag">{tag}</span>)}
+                <div className="flex gap-2 flex-wrap mb-4">
+                  {selectedMatch.job.tags.map((tag, i) => (
+                    /* match-tag */
+                    <span
+                      key={i}
+                      className="text-indigo-600 px-2.5 py-0.5 rounded-xl text-[11px] font-semibold border border-indigo-200"
+                      style={{ background: 'linear-gradient(135deg, #e0e7ff, #f3e8ff)' }}
+                    >{tag}</span>
+                  ))}
                 </div>
               )}
-              <div className="detail-description">
+
+              {/* detail-description */}
+              <div className="mt-4 leading-relaxed">
                 <strong>Description:</strong>
-                <p>{selectedMatch.job.description}</p>
+                <p className="mt-2 text-gray-600 m-0">{selectedMatch.job.description}</p>
               </div>
-              <div className="detail-meta">
-                <small>Matched on: {selectedMatch.matchedAt.toLocaleDateString()}</small>
+
+              {/* detail-meta */}
+              <div className="mt-5 pt-4 border-t border-gray-100 text-gray-400">
+                <small>Matched on: {new Date(selectedMatch.matchedAt).toLocaleDateString()}</small>
               </div>
             </div>
           </div>
@@ -260,6 +425,11 @@ export const MatchesView = ({ matches, onApply, onUndoApply, onNavigateToBrowser
           job={applyJob}
           currentUser={currentUser}
           onClose={() => setApplyJob(null)}
+          onApply={(jobId) => {
+            const match = matches.find(m => (m.job.id || m.job._id) === jobId);
+            if (match) onApply(match.id);
+            setApplyJob(null);
+          }}
         />
       )}
     </div>

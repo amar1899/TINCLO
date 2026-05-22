@@ -1,10 +1,11 @@
 import express from 'express';
+import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
 import Match from '../models/Match.js';
 
 const router = express.Router();
 
-// POST /api/users — Register a new user (full details)
+// POST /api/users — Register a new user (legacy compatibility)
 router.post('/', async (req, res) => {
   const { userId, name, email, password } = req.body;
 
@@ -13,7 +14,6 @@ router.post('/', async (req, res) => {
   }
 
   try {
-    // Check if email already exists
     if (email) {
       const existing = await User.findOne({ email });
       if (existing) {
@@ -21,7 +21,9 @@ router.post('/', async (req, res) => {
       }
     }
 
-    const user = new User({ userId, name: name || '', email: email || '', password: password || '' });
+    // Hash password if provided
+    const hashedPassword = password ? await bcrypt.hash(password, 12) : '';
+    const user = new User({ userId, name: name || '', email: email || '', password: hashedPassword });
     const newUser = await user.save();
     res.status(201).json(newUser);
   } catch (error) {
@@ -29,30 +31,6 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
     res.status(400).json({ message: error.message });
-  }
-});
-
-// POST /api/users/login — Login
-router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).json({ message: 'Email and password are required' });
-  }
-
-  try {
-    const user = await User.findOne({ email: email.toLowerCase().trim() });
-    if (!user || user.password !== password) {
-      return res.status(401).json({ message: 'Invalid email or password' });
-    }
-    res.json({
-      userId: user.userId,
-      name: user.name,
-      email: user.email,
-      createdAt: user.createdAt
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
   }
 });
 
@@ -66,7 +44,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/users/data — Full database summary (admin)
+// GET /api/users/data — Full database summary (admin fallback)
 router.get('/data', async (req, res) => {
   try {
     const [users, matches] = await Promise.all([
