@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "./SignupPage.css";
 import NavigationLanding from "./NavigationLanding";
 import ApiService from "../services/ApiService";
 
@@ -11,20 +10,14 @@ const SignupPage = () => {
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
-
+    setError(""); setSuccess("");
     const name = form.name.trim();
     const email = form.email.trim().toLowerCase();
     const password = form.password;
-
-    // Validations
     if (!name) { setError("Full name is required."); return; }
     if (name.length < 2) { setError("Name must be at least 2 characters."); return; }
     if (!/^[a-zA-Z\s'-]+$/.test(name)) { setError("Name can only contain letters, spaces, hyphens and apostrophes."); return; }
@@ -34,151 +27,134 @@ const SignupPage = () => {
     if (password.length < 8) { setError("Password must be at least 8 characters long."); return; }
     if (!/[A-Z]/.test(password)) { setError("Password must contain at least one uppercase letter."); return; }
     if (!/[0-9]/.test(password)) { setError("Password must contain at least one number."); return; }
-
     setLoading(true);
-
     try {
       const userId = `user-${email.split('@')[0]}-${Date.now()}`;
-
-      // Try to save to MongoDB
       try {
-        await ApiService.registerUser({ userId, name, email, password });
-        console.log('✅ User saved to MongoDB Atlas');
-      } catch (apiError) {
-        if (apiError.message.includes('already exists')) {
-          setError('An account with this email already exists. Please login.');
-          setLoading(false);
+        const data = await ApiService.registerUser({ userId, name, email, password });
+        // Store JWT token if returned from backend
+        if (data?.token) {
+          localStorage.setItem('tinclo_token', data.token);
+        }
+        if (data?.user) {
+          localStorage.setItem('tinclo_current_user', JSON.stringify(data.user));
+          setSuccess('✅ Account created successfully! Redirecting...');
+          setForm({ name: '', email: '', password: '' });
+          setTimeout(() => navigate('/jobs'), 1500);
           return;
         }
-        console.warn('⚠️ MongoDB save failed, using localStorage fallback:', apiError.message);
+      } catch (apiError) {
+        if (apiError.message.includes('already exists')) { setError('An account with this email already exists. Please login.'); setLoading(false); return; }
+        console.warn('MongoDB save failed, using localStorage fallback:', apiError.message);
       }
-
-      // Save to localStorage for session management
       const existingUsers = JSON.parse(localStorage.getItem('tinclo_users') || '[]');
-      const userExists = existingUsers.find(u => u.email === email);
-      if (userExists) {
-        setError('An account with this email already exists. Please login.');
-        setLoading(false);
-        return;
-      }
-
+      if (existingUsers.find(u => u.email === email)) { setError('An account with this email already exists. Please login.'); setLoading(false); return; }
       existingUsers.push({ id: userId, name, email, password, createdAt: new Date().toISOString() });
       localStorage.setItem('tinclo_users', JSON.stringify(existingUsers));
       localStorage.setItem('tinclo_current_user', JSON.stringify({ id: userId, name, email }));
-
       setSuccess('✅ Account created successfully! Redirecting...');
       setForm({ name: '', email: '', password: '' });
       setTimeout(() => navigate('/jobs'), 1500);
-
-    } catch (err) {
-      console.error('Signup error:', err);
-      setError("An error occurred. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { console.error('Signup error:', err); setError("An error occurred. Please try again.");
+    } finally { setLoading(false); }
   };
+
+  const inputCls = "w-full px-5 py-4 text-base border-2 border-gray-200 rounded-xl bg-gray-50 transition-all duration-300 focus:outline-none focus:border-indigo-500 focus:bg-white focus:shadow-[0_0_0_4px_rgba(102,126,234,0.1)] focus:-translate-y-0.5 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60 placeholder-gray-400 font-[inherit]";
 
   return (
     <>
       <NavigationLanding />
-      <div className="signup-container">
-        <div className="signup-background">
-          <div className="shape shape-1"></div>
-          <div className="shape shape-2"></div>
-          <div className="shape shape-3"></div>
+      <div className="min-h-screen flex items-center justify-center pt-20 px-4 pb-8 relative overflow-hidden"
+        style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+        {/* Animated blobs */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute w-[500px] h-[500px] rounded-full -top-[10%] -left-[10%] opacity-30 blur-[80px] animate-[float_20s_infinite_ease-in-out]"
+            style={{ background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' }} />
+          <div className="absolute w-[400px] h-[400px] rounded-full -bottom-[10%] -right-[10%] opacity-30 blur-[80px] animate-[float_20s_5s_infinite_ease-in-out]"
+            style={{ background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' }} />
+          <div className="absolute w-[300px] h-[300px] rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-30 blur-[80px] animate-[float_20s_10s_infinite_ease-in-out]"
+            style={{ background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)' }} />
         </div>
 
-        <div className="signup-content">
-          <div className="signup-card">
-            <div className="signup-header">
-              <div className="icon-wrapper">
-                <svg className="signup-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <div className="relative z-10 flex gap-12 max-w-[1200px] w-full items-center justify-center flex-wrap lg:flex-nowrap">
+          {/* Signup Card */}
+          <div className="bg-white/[0.98] backdrop-blur-xl rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.3)] px-10 py-12 w-full max-w-[480px] border border-white/30 animate-[slideUp_0.6s_ease-out]">
+            {/* Header */}
+            <div className="text-center mb-10">
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-[20px] mb-6 shadow-[0_10px_30px_rgba(102,126,234,0.3)] animate-[pulse_2s_infinite]"
+                style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+                <svg className="w-10 h-10 text-white" viewBox="0 0 24 24" fill="none">
                   <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
-              <h2>Create Your Account</h2>
-              <p>Join thousands of job seekers finding their dream careers</p>
+              <h2 className="text-4xl font-extrabold mb-3 bg-gradient-to-br from-indigo-500 to-purple-700 bg-clip-text text-transparent">
+                Create Your Account
+              </h2>
+              <p className="text-gray-500 leading-relaxed">Join thousands of job seekers finding their dream careers</p>
             </div>
 
-            <form className="signup-form" onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label htmlFor="name">
-                  <svg className="input-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  Full Name
-                </label>
-                <input type="text" id="name" name="name" placeholder="Enter your full name"
-                  value={form.name} onChange={handleChange} disabled={loading} required />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="email">
-                  <svg className="input-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M22 6L12 13L2 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  Email Address
-                </label>
-                <input type="email" id="email" name="email" placeholder="Enter your email"
-                  value={form.email} onChange={handleChange} disabled={loading} required />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="password">
-                  <svg className="input-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M7 11V7C7 5.67392 7.52678 4.40215 8.46447 3.46447C9.40215 2.52678 10.6739 2 12 2C13.3261 2 14.5979 2.52678 15.5355 3.46447C16.4732 4.40215 17 5.67392 17 7V11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  Password
-                </label>
-                <input type="password" id="password" name="password"
-                  placeholder="Min 8 chars, 1 uppercase, 1 number"
-                  value={form.password} onChange={handleChange} disabled={loading} required minLength={8} />
-              </div>
+            <form onSubmit={handleSubmit} className="flex flex-col gap-7">
+              {[
+                { id: 'name', type: 'text', label: 'Full Name', placeholder: 'Enter your full name', icon: '👤' },
+                { id: 'email', type: 'email', label: 'Email Address', placeholder: 'Enter your email', icon: '✉️' },
+                { id: 'password', type: 'password', label: 'Password', placeholder: 'Min 8 chars, 1 uppercase, 1 number', icon: '🔒', minLength: 8 },
+              ].map(f => (
+                <div key={f.id} className="flex flex-col gap-3">
+                  <label htmlFor={f.id} className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                    <span className="text-indigo-500">{f.icon}</span>{f.label}
+                  </label>
+                  <input type={f.type} id={f.id} name={f.id} placeholder={f.placeholder}
+                    value={form[f.id]} onChange={handleChange} disabled={loading} required
+                    minLength={f.minLength} className={inputCls} />
+                </div>
+              ))}
 
               {error && (
-                <div className="signup-error">
-                  <svg className="alert-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <div className="flex items-center gap-3 px-5 py-4 bg-red-100 text-red-700 rounded-xl text-sm font-medium border-l-4 border-red-400">
+                  <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none">
                     <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
-                    <path d="M12 8V12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                    <path d="M12 16H12.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                    <path d="M12 8V12M12 16H12.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                   </svg>
                   {error}
                 </div>
               )}
-
               {success && (
-                <div className="signup-success">
-                  <svg className="alert-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M22 11.08V12C21.9988 14.1564 21.3005 16.2547 20.0093 17.9818C18.7182 19.7088 16.9033 20.9725 14.8354 21.5839C12.7674 22.1953 10.5573 22.1219 8.53447 21.3746C6.51168 20.6273 4.78465 19.2461 3.61096 17.4371C2.43727 15.628 1.87979 13.4881 2.02168 11.3363C2.16356 9.18455 2.99721 7.13631 4.39828 5.49706C5.79935 3.85781 7.69279 2.71537 9.79619 2.24013C11.8996 1.76489 14.1003 1.98232 16.07 2.86" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M22 4L12 14.01L9 11.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  {success}
+                <div className="flex items-center gap-3 px-5 py-4 bg-green-100 text-green-700 rounded-xl text-sm font-medium border-l-4 border-green-400">
+                  ✅ {success}
                 </div>
               )}
 
-              <button type="submit" className="signup-button" disabled={loading}>
+              <button type="submit" disabled={loading}
+                className="relative overflow-hidden w-full py-4.5 text-lg font-bold text-white rounded-xl border-none cursor-pointer flex items-center justify-center gap-3 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_15px_35px_rgba(102,126,234,0.4)] disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none shadow-[0_10px_25px_rgba(102,126,234,0.3)] focus-visible:outline-2 focus-visible:outline-indigo-500 focus-visible:outline-offset-3"
+                style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
                 {loading ? (
-                  <><span className="spinner"></span>Creating Your Account...</>
+                  <><span className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin" />Creating Your Account...</>
                 ) : (
-                  <>
-                    <span>Sign Up</span>
-                    <svg className="button-arrow" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M12 5L19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <>Sign Up
+                    <svg className="w-5 h-5 transition-transform group-hover:translate-x-1" viewBox="0 0 24 24" fill="none">
+                      <path d="M5 12H19M12 5L19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </>
                 )}
               </button>
             </form>
 
-            <div className="signup-footer">
-              <p>Already have an account?{" "}<a href="/login" className="login-link">Login here</a></p>
-              <div className="security-badge">
-                <svg className="lock-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <div className="mt-10 text-center pt-8 border-t border-gray-200">
+              <p className="text-gray-500 mb-5">Already have an account?{" "}
+                <a href="/login" className="text-indigo-500 font-bold hover:text-purple-700 transition-colors relative after:absolute after:bottom-[-2px] after:left-0 after:w-0 after:h-0.5 after:bg-indigo-500 after:transition-all hover:after:w-full">
+                  Login here
+                </a>
+              </p>
+              <div className="flex items-center gap-3 my-3.5 text-gray-300 text-xs">
+                <span className="flex-1 h-px bg-gray-200" />or<span className="flex-1 h-px bg-gray-200" />
+              </div>
+              <a href="/admin/login"
+                className="flex items-center justify-center gap-1.5 w-full py-2.5 px-4 bg-transparent border border-gray-200 rounded-lg text-gray-600 text-sm font-semibold no-underline transition-all hover:border-purple-700 hover:text-purple-700 hover:bg-purple-50 mb-4">
+                🛡️ Admin Login
+              </a>
+              <div className="inline-flex items-center gap-2 px-5 py-3 bg-gray-50 rounded-full text-sm text-gray-600 font-medium">
+                <svg className="w-4 h-4 text-green-500" viewBox="0 0 24 24" fill="none">
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="currentColor" strokeWidth="2"/>
                   <path d="M7 11V7C7 5.67392 7.52678 4.40215 8.46447 3.46447C9.40215 2.52678 10.6739 2 12 2C13.3261 2 14.5979 2.52678 15.5355 3.46447C16.4732 4.40215 17 5.67392 17 7V11" stroke="currentColor" strokeWidth="2"/>
                 </svg>
@@ -187,29 +163,25 @@ const SignupPage = () => {
             </div>
           </div>
 
-          <div className="signup-benefits">
-            <h3>Why Join TINCLO?</h3>
-            <div className="benefit-item">
-              <div className="benefit-icon">🎯</div>
-              <div className="benefit-text">
-                <h4>Smart Job Matching</h4>
-                <p>Swipe through jobs tailored to your skills</p>
+          {/* Benefits */}
+          <div className="bg-white/[0.95] backdrop-blur-xl rounded-3xl p-10 w-full max-w-[400px] shadow-[0_20px_60px_rgba(0,0,0,0.2)] border border-white/30 animate-[slideUp_0.6s_0.2s_ease-out_both]">
+            <h3 className="text-3xl font-bold text-gray-900 mb-8 text-center">Why Join TINCLO?</h3>
+            {[
+              { icon: '🎯', title: 'Smart Job Matching', desc: 'Swipe through jobs tailored to your skills' },
+              { icon: '⚡', title: 'Quick Applications', desc: 'Apply to jobs with just one click' },
+              { icon: '💼', title: 'Track Your Progress', desc: 'Manage all your applications in one place' },
+            ].map((b, i) => (
+              <div key={i} className="flex gap-5 mb-8 last:mb-0 items-start">
+                <div className="text-4xl w-[60px] h-[60px] flex items-center justify-center rounded-2xl flex-shrink-0 animate-[bounce_2s_infinite]"
+                  style={{ background: 'linear-gradient(135deg, rgba(102,126,234,0.08) 0%, rgba(118,75,162,0.08) 100%)', animationDelay: `${i * 0.2}s` }}>
+                  {b.icon}
+                </div>
+                <div>
+                  <h4 className="text-lg font-bold text-gray-700 mb-2">{b.title}</h4>
+                  <p className="text-sm text-gray-500 leading-relaxed">{b.desc}</p>
+                </div>
               </div>
-            </div>
-            <div className="benefit-item">
-              <div className="benefit-icon">⚡</div>
-              <div className="benefit-text">
-                <h4>Quick Applications</h4>
-                <p>Apply to jobs with just one click</p>
-              </div>
-            </div>
-            <div className="benefit-item">
-              <div className="benefit-icon">💼</div>
-              <div className="benefit-text">
-                <h4>Track Your Progress</h4>
-                <p>Manage all your applications in one place</p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </div>

@@ -1,8 +1,7 @@
-// JobCard Component - Full job details with in-app apply modal
+// JobCard Component - Swipe right to like, swipe left to pass
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import ApiService from '../services/ApiService';
-import './JobCard.css';
 
 const SOURCE_COLORS = {
   'Naukri':    { bg: '#ff6b35', text: '#fff' },
@@ -13,179 +12,189 @@ const SOURCE_COLORS = {
   'mock':      { bg: '#667eea', text: '#fff' },
 };
 
-// In-app Apply Modal
+// ── Apply Modal ──────────────────────────────────────────────────────────────
 const ApplyModal = ({ job, onClose, currentUser }) => {
   const [form, setForm] = useState({
     name: currentUser?.name || '',
     email: currentUser?.email || '',
-    phone: '',
-    experience: '',
-    coverLetter: '',
+    phone: '', experience: '', coverLetter: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [previewUrl, setPreviewUrl] = useState('');
-  const [emailValidating, setEmailValidating] = useState(false);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
-
-  const validateEmailOnBlur = async () => {
-    if (!form.email) return;
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-    if (!emailRegex.test(form.email)) {
-      setError('Please enter a valid email address.');
-      return;
-    }
-    setEmailValidating(true);
-    try {
-      const result = await ApiService.validateEmail(form.email);
-      if (!result.valid) {
-        setError('Please use a real email address. Disposable emails are not allowed.');
-      } else {
-        setError('');
-      }
-    } catch {
-      // ignore validation errors silently
-    } finally {
-      setEmailValidating(false);
-    }
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-
-    // Validations
-    if (!form.name.trim()) { setError('Full name is required.'); return; }
+    if (!form.name.trim())  { setError('Full name is required.'); return; }
     if (!form.email.trim()) { setError('Email address is required.'); return; }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-    if (!emailRegex.test(form.email)) { setError('Please enter a valid email address.'); return; }
-    if (form.phone && !/^[+\d\s\-()]{7,15}$/.test(form.phone)) { setError('Please enter a valid phone number.'); return; }
-    if (!form.experience) { setError('Please select your experience level.'); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(form.email)) { setError('Please enter a valid email.'); return; }
+    if (!form.experience)   { setError('Please select your experience level.'); return; }
 
     setLoading(true);
     try {
       const result = await ApiService.applyToJob({
-        name: form.name,
-        email: form.email,
-        phone: form.phone,
-        experience: form.experience,
-        coverLetter: form.coverLetter,
-        jobTitle: job.title,
-        company: job.company,
-        location: job.location,
-        salary: job.salary,
+        name: form.name, email: form.email, phone: form.phone,
+        experience: form.experience, coverLetter: form.coverLetter,
+        jobTitle: job.title, company: job.company,
+        location: job.location, salary: job.salary,
         jobId: job._id || job.id,
       });
-      setSuccess(result.message || 'Application submitted! Check your email for confirmation.');
+      setSuccess(result.message || 'Application submitted!');
       if (result.previewUrl) setPreviewUrl(result.previewUrl);
     } catch (err) {
-      setError(err.message || 'Failed to submit application. Please try again.');
+      setError(err.message || 'Failed to submit. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="apply-modal-overlay" onClick={onClose}>
-      <div className="apply-modal" onClick={(e) => e.stopPropagation()}>
-        <button className="apply-modal-close" onClick={onClose} aria-label="Close">×</button>
+    /* apply-modal-overlay: fixed inset-0, dark backdrop, flex center, z-[2000], backdrop-blur */
+    <div
+      className="fixed inset-0 bg-black/65 flex items-center justify-center z-[2000] p-5 backdrop-blur-sm animate-fade-in"
+      onClick={onClose}
+    >
+      {/* apply-modal: white card, rounded-3xl, max-w, max-h, overflow-y-auto, shadow, animate slideUp */}
+      <div
+        className="bg-white rounded-3xl w-full max-w-[580px] max-h-[90vh] overflow-y-auto shadow-[0_30px_80px_rgba(0,0,0,0.4)] relative animate-slide-up"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* apply-modal-close */}
+        <button
+          className="absolute top-4 right-4 bg-gray-50 border-none text-2xl text-gray-500 cursor-pointer w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 z-10 hover:bg-gray-100 hover:text-gray-700 hover:rotate-90"
+          onClick={onClose}
+        >×</button>
 
-        <div className="apply-modal-header">
-          <h2>Apply for {job.title}</h2>
-          <p>at <strong>{job.company}</strong> · {job.location}</p>
+        {/* apply-modal-header */}
+        <div
+          className="px-8 pt-7 pb-6 rounded-t-3xl"
+          style={{ background: 'linear-gradient(135deg, #667eea, #764ba2)' }}
+        >
+          <h2 className="text-white text-xl font-extrabold m-0 mb-1.5">Apply for {job.title}</h2>
+          <p className="text-white/85 text-sm m-0">at <strong>{job.company}</strong> · {job.location}</p>
         </div>
 
         {success ? (
-          <div className="apply-success-state">
-            <div className="apply-success-icon">✅</div>
-            <h3>Application Submitted!</h3>
-            <p>{success}</p>
+          /* apply-success-state */
+          <div className="px-8 py-10 text-center flex flex-col items-center gap-3">
+            <div className="text-[56px]">✅</div>
+            <h3 className="text-[22px] font-extrabold text-green-900 m-0">Application Submitted!</h3>
+            <p className="text-gray-600 m-0 text-[15px]">{success}</p>
             {previewUrl ? (
-              <div className="apply-preview-box">
-                <p className="apply-success-note">📧 Click below to view your confirmation email:</p>
+              /* apply-preview-box */
+              <div className="bg-indigo-50 rounded-xl px-5 py-4 text-center w-full">
+                <p className="text-[13px] text-gray-500">📧 View your confirmation email:</p>
+                {/* apply-preview-link */}
                 <a
                   href={previewUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="apply-preview-link"
-                >
-                  📬 View Confirmation Email
-                </a>
-                <p style={{ fontSize: '11px', color: '#a0aec0', marginTop: '8px' }}>
-                  (Opens in Ethereal — free test email viewer)
-                </p>
+                  className="inline-block mt-2 px-6 py-3 text-white font-bold text-sm rounded-xl no-underline transition-all duration-200 shadow-[0_4px_12px_rgba(102,126,234,0.4)] hover:-translate-y-0.5 hover:shadow-[0_6px_18px_rgba(102,126,234,0.5)]"
+                  style={{ background: 'linear-gradient(135deg, #667eea, #764ba2)' }}
+                >📬 View Email</a>
               </div>
             ) : (
-              <p className="apply-success-note">A confirmation email has been sent to <strong>{form.email}</strong></p>
+              <p className="text-[13px] text-gray-400">Confirmation sent to <strong>{form.email}</strong></p>
             )}
-            <button className="apply-submit-btn" onClick={onClose}>Close</button>
+            {/* apply-submit-btn (close button in success state) */}
+            <button
+              className="w-full py-3.5 text-white text-[15px] font-bold border-none rounded-xl cursor-pointer transition-all duration-200 flex items-center justify-center gap-2 shadow-[0_4px_15px_rgba(102,126,234,0.4)] hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(102,126,234,0.5)] disabled:opacity-60 disabled:cursor-not-allowed"
+              style={{ background: 'linear-gradient(135deg, #667eea, #764ba2)' }}
+              onClick={onClose}
+            >Close</button>
           </div>
         ) : (
-          <form className="apply-form" onSubmit={handleSubmit}>
-            <div className="apply-form-row">
-              <div className="apply-form-group">
-                <label>Full Name *</label>
+          /* apply-form */
+          <form className="px-8 py-7 flex flex-col gap-[18px]" onSubmit={handleSubmit}>
+            {/* apply-form-row */}
+            <div className="grid grid-cols-2 gap-4 max-[560px]:grid-cols-1">
+              {/* apply-form-group */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-bold text-gray-700">Full Name *</label>
                 <input
-                  type="text" name="name" value={form.name}
-                  onChange={handleChange} placeholder="Your full name"
-                  required disabled={loading}
+                  type="text" name="name" value={form.name} onChange={handleChange}
+                  placeholder="Your full name" required disabled={loading}
+                  className="px-3.5 py-[11px] border-2 border-gray-200 rounded-[10px] text-sm text-gray-700 bg-gray-50 transition-all duration-200 font-[inherit] outline-none focus:border-indigo-400 focus:bg-white focus:shadow-[0_0_0_3px_rgba(102,126,234,0.1)]"
                 />
               </div>
-              <div className="apply-form-group">
-                <label>Email Address *</label>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-bold text-gray-700">Email Address *</label>
                 <input
-                  type="email" name="email" value={form.email}
-                  onChange={handleChange} onBlur={validateEmailOnBlur}
+                  type="email" name="email" value={form.email} onChange={handleChange}
                   placeholder="your@email.com" required disabled={loading}
+                  className="px-3.5 py-[11px] border-2 border-gray-200 rounded-[10px] text-sm text-gray-700 bg-gray-50 transition-all duration-200 font-[inherit] outline-none focus:border-indigo-400 focus:bg-white focus:shadow-[0_0_0_3px_rgba(102,126,234,0.1)]"
                 />
-                {emailValidating && <span className="email-validating">Validating...</span>}
               </div>
             </div>
 
-            <div className="apply-form-row">
-              <div className="apply-form-group">
-                <label>Phone Number</label>
+            {/* apply-form-row */}
+            <div className="grid grid-cols-2 gap-4 max-[560px]:grid-cols-1">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-bold text-gray-700">Phone Number</label>
                 <input
-                  type="tel" name="phone" value={form.phone}
-                  onChange={handleChange} placeholder="+91 98765 43210"
-                  disabled={loading}
+                  type="tel" name="phone" value={form.phone} onChange={handleChange}
+                  placeholder="+91 98765 43210" disabled={loading}
+                  className="px-3.5 py-[11px] border-2 border-gray-200 rounded-[10px] text-sm text-gray-700 bg-gray-50 transition-all duration-200 font-[inherit] outline-none focus:border-indigo-400 focus:bg-white focus:shadow-[0_0_0_3px_rgba(102,126,234,0.1)]"
                 />
               </div>
-              <div className="apply-form-group">
-                <label>Years of Experience *</label>
-                <select name="experience" value={form.experience} onChange={handleChange} required disabled={loading}>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-bold text-gray-700">Years of Experience *</label>
+                <select
+                  name="experience" value={form.experience} onChange={handleChange}
+                  required disabled={loading}
+                  className="px-3.5 py-[11px] border-2 border-gray-200 rounded-[10px] text-sm text-gray-700 bg-gray-50 transition-all duration-200 font-[inherit] outline-none focus:border-indigo-400 focus:bg-white focus:shadow-[0_0_0_3px_rgba(102,126,234,0.1)]"
+                >
                   <option value="">Select experience</option>
-                  <option value="Fresher (0 years)">Fresher (0 years)</option>
-                  <option value="0-1 years">0-1 years</option>
-                  <option value="1-2 years">1-2 years</option>
-                  <option value="2-4 years">2-4 years</option>
-                  <option value="4-6 years">4-6 years</option>
-                  <option value="6-10 years">6-10 years</option>
-                  <option value="10+ years">10+ years</option>
+                  <option>Fresher (0 years)</option>
+                  <option>0-1 years</option>
+                  <option>1-2 years</option>
+                  <option>2-4 years</option>
+                  <option>4-6 years</option>
+                  <option>6-10 years</option>
+                  <option>10+ years</option>
                 </select>
               </div>
             </div>
 
-            <div className="apply-form-group">
-              <label>Cover Letter / Why should we hire you?</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[13px] font-bold text-gray-700">Cover Letter</label>
               <textarea
-                name="coverLetter" value={form.coverLetter}
-                onChange={handleChange} rows={4}
-                placeholder="Tell us about yourself and why you're a great fit for this role..."
-                disabled={loading}
+                name="coverLetter" value={form.coverLetter} onChange={handleChange}
+                rows={4} placeholder="Tell us why you're a great fit..." disabled={loading}
+                className="px-3.5 py-[11px] border-2 border-gray-200 rounded-[10px] text-sm text-gray-700 bg-gray-50 transition-all duration-200 font-[inherit] outline-none resize-y min-h-[100px] focus:border-indigo-400 focus:bg-white focus:shadow-[0_0_0_3px_rgba(102,126,234,0.1)]"
               />
             </div>
 
-            {error && <div className="apply-error">⚠️ {error}</div>}
+            {/* apply-error */}
+            {error && (
+              <div className="bg-red-100 text-red-700 px-4 py-3 rounded-[10px] text-[13px] font-medium border-l-4 border-red-400">
+                ⚠️ {error}
+              </div>
+            )}
 
-            <button type="submit" className="apply-submit-btn" disabled={loading || !!error}>
-              {loading ? <><span className="apply-spinner"></span>Submitting...</> : '🚀 Submit Application'}
+            {/* apply-submit-btn */}
+            <button
+              type="submit"
+              className="w-full py-3.5 text-white text-[15px] font-bold border-none rounded-xl cursor-pointer transition-all duration-200 flex items-center justify-center gap-2 shadow-[0_4px_15px_rgba(102,126,234,0.4)] enabled:hover:-translate-y-0.5 enabled:hover:shadow-[0_8px_25px_rgba(102,126,234,0.5)] disabled:opacity-60 disabled:cursor-not-allowed"
+              style={{ background: 'linear-gradient(135deg, #667eea, #764ba2)' }}
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  {/* apply-spinner */}
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Submitting...
+                </>
+              ) : '🚀 Submit Application'}
             </button>
 
-            <p className="apply-email-note">
-              📧 A confirmation email will be sent to your email address upon successful submission.
+            {/* apply-email-note */}
+            <p className="text-xs text-gray-400 text-center m-0">
+              📧 A confirmation email will be sent upon submission.
             </p>
           </form>
         )}
@@ -194,120 +203,299 @@ const ApplyModal = ({ job, onClose, currentUser }) => {
   );
 };
 
+// ── JobCard with Swipe ────────────────────────────────────────────────────────
+const SWIPE_THRESHOLD = 100; // px needed to trigger swipe action
+const SWIPE_ANGLE_LIMIT = 30; // max rotation degrees
+
 export const JobCard = ({ job, onLike, onDislike, currentUser }) => {
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [showFullDesc, setShowFullDesc] = useState(false);
+  const [swipeDir, setSwipeDir] = useState(null); // 'left' | 'right' | null
+  const [isDragging, setIsDragging] = useState(false);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [isFlying, setIsFlying] = useState(false);
+
+  const cardRef = useRef(null);
+  const startPos = useRef({ x: 0, y: 0 });
   const sourceStyle = SOURCE_COLORS[job.source] || SOURCE_COLORS['External'];
 
   const shortDesc = job.description?.slice(0, 180);
   const hasMore = job.description?.length > 180;
 
+  // ── Drag start ──
+  const onDragStart = useCallback((clientX, clientY) => {
+    startPos.current = { x: clientX, y: clientY };
+    setIsDragging(true);
+  }, []);
+
+  // ── Drag move ──
+  const onDragMove = useCallback((clientX, clientY) => {
+    if (!isDragging) return;
+    const dx = clientX - startPos.current.x;
+    const dy = clientY - startPos.current.y;
+    setOffset({ x: dx, y: dy });
+    if (dx > 40)       setSwipeDir('right');
+    else if (dx < -40) setSwipeDir('left');
+    else               setSwipeDir(null);
+  }, [isDragging]);
+
+  // ── Drag end ──
+  const onDragEnd = useCallback(() => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    const dx = offset.x;
+
+    if (dx > SWIPE_THRESHOLD) {
+      setIsFlying(true);
+      setOffset({ x: 600, y: offset.y });
+      setTimeout(() => {
+        onLike(job._id || job.id);
+        setOffset({ x: 0, y: 0 });
+        setSwipeDir(null);
+        setIsFlying(false);
+      }, 350);
+    } else if (dx < -SWIPE_THRESHOLD) {
+      setIsFlying(true);
+      setOffset({ x: -600, y: offset.y });
+      setTimeout(() => {
+        onDislike(job._id || job.id);
+        setOffset({ x: 0, y: 0 });
+        setSwipeDir(null);
+        setIsFlying(false);
+      }, 350);
+    } else {
+      setOffset({ x: 0, y: 0 });
+      setSwipeDir(null);
+    }
+  }, [isDragging, offset, job, onLike, onDislike]);
+
+  // ── Mouse events ──
+  const onMouseDown = (e) => {
+    if (e.target.closest('button') || e.target.closest('a') || e.target.closest('select') || e.target.closest('textarea')) return;
+    e.preventDefault();
+    onDragStart(e.clientX, e.clientY);
+  };
+
+  const onMouseMove = (e) => { if (isDragging) onDragMove(e.clientX, e.clientY); };
+  const onMouseUp   = ()    => onDragEnd();
+
+  // ── Touch events ──
+  const onTouchStart = (e) => {
+    const t = e.touches[0];
+    onDragStart(t.clientX, t.clientY);
+  };
+  const onTouchMove = (e) => {
+    const t = e.touches[0];
+    onDragMove(t.clientX, t.clientY);
+  };
+  const onTouchEnd = () => onDragEnd();
+
+  // ── Card transform ──
+  const rotation = Math.min(Math.max(offset.x / 15, -SWIPE_ANGLE_LIMIT), SWIPE_ANGLE_LIMIT);
+  const cardStyle = {
+    transform: `translateX(${offset.x}px) translateY(${offset.y * 0.1}px) rotate(${rotation}deg)`,
+    transition: isDragging ? 'none' : isFlying ? 'transform 0.35s ease' : 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+    cursor: isDragging ? 'grabbing' : 'grab',
+    userSelect: 'none',
+  };
+
+  const likeOpacity  = Math.min(Math.max(offset.x / SWIPE_THRESHOLD, 0), 1);
+  const passOpacity  = Math.min(Math.max(-offset.x / SWIPE_THRESHOLD, 0), 1);
+
+
   return (
     <>
-      <div className="job-card" data-testid="job-card">
-        <div className="job-card-header">
-          <div className="company-badge">
+      {/* job-card swipeable: relative, gradient bg, rounded-3xl, shadow, p-8, max-w, mx-auto, border, overflow-hidden, will-change-transform, touch-action-pan-y, animate-slide-up */}
+      <div
+        ref={cardRef}
+        className="relative rounded-3xl p-8 max-w-[600px] mx-auto border border-white/80 overflow-hidden will-change-transform touch-pan-y animate-slide-up"
+        data-testid="job-card"
+        style={{
+          ...cardStyle,
+          background: 'linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%)',
+          boxShadow: '0 10px 40px rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.06)',
+        }}
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseUp={onMouseUp}
+        onMouseLeave={onMouseUp}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      >
+        {/* Decorative top gradient bar (replaces ::before pseudo-element) */}
+        <div
+          className="absolute top-0 left-0 right-0 h-[5px]"
+          style={{ background: 'linear-gradient(90deg, #667eea 0%, #764ba2 33%, #f093fb 66%, #ff6b6b 100%)' }}
+        />
+
+        {/* like-indicator: absolute top-6 left-5, green border+text, rotated -15deg */}
+        <div
+          className="absolute top-6 left-5 px-5 py-2.5 rounded-xl text-[22px] font-black tracking-[2px] pointer-events-none z-10 border-4 border-green-400 text-green-400 bg-green-400/10 -rotate-[15deg] transition-opacity duration-100"
+          style={{ opacity: likeOpacity }}
+        >
+          ❤️ LIKE
+        </div>
+
+        {/* pass-indicator: absolute top-6 right-5, red border+text, rotated 15deg */}
+        <div
+          className="absolute top-6 right-5 px-5 py-2.5 rounded-xl text-[22px] font-black tracking-[2px] pointer-events-none z-10 border-4 border-red-400 text-red-400 bg-red-400/10 rotate-[15deg] transition-opacity duration-100"
+          style={{ opacity: passOpacity }}
+        >
+          ✕ PASS
+        </div>
+
+        {/* job-card-header: flex justify-between items-start mb-6 pb-5 border-b-2 border-gray-100 */}
+        <div className="flex justify-between items-start mb-6 pb-5 border-b-2 border-[#f0f0f5]">
+          {/* company-badge: flex items-center gap-4 */}
+          <div className="flex items-center gap-4">
             {job.companyLogo ? (
-              <img src={job.companyLogo} alt={job.company} className="company-logo-img"
-                onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
+              <img
+                src={job.companyLogo}
+                alt={job.company}
+                className="w-14 h-14 rounded-2xl object-contain bg-[#f8f9ff] border border-gray-200 p-1"
+                onError={e => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+              />
             ) : null}
-            <div className="company-logo" style={job.companyLogo ? { display: 'none' } : {}}>
+            {/* company-logo: 56x56 gradient circle with initial letter */}
+            <div
+              className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl font-bold text-white shadow-[0_4px_12px_rgba(102,126,234,0.3)]"
+              style={{
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                display: job.companyLogo ? 'none' : 'flex',
+              }}
+            >
               {job.company.charAt(0).toUpperCase()}
             </div>
-            <div className="company-info">
-              <h3 className="job-company">{job.company}</h3>
-              <span className="job-type">{job.jobType || 'Full-time'}</span>
+            {/* company-info: flex flex-col gap-1 */}
+            <div className="flex flex-col gap-1">
+              <h3 className="text-lg font-bold text-gray-900 m-0">{job.company}</h3>
+              <span className="text-[13px] text-gray-500 font-medium">{job.jobType || 'Full-time'}</span>
             </div>
           </div>
 
-          <div className="job-header-right">
+          {/* job-header-right: flex flex-col items-end gap-1.5 */}
+          <div className="flex flex-col items-end gap-1.5">
             {job.source && (
-              <span className="job-source-badge" style={{ background: sourceStyle.bg, color: sourceStyle.text }}>
+              /* job-source-badge: inline pill with dynamic bg/color */
+              <span
+                className="px-3 py-[5px] rounded-[20px] text-[11px] font-bold tracking-[0.3px] whitespace-nowrap"
+                style={{ background: sourceStyle.bg, color: sourceStyle.text }}
+              >
                 via {job.source === 'mock' ? 'Naukri' : job.source}
               </span>
             )}
           </div>
         </div>
 
-        <div className="job-card-body">
-          <h2 className="job-title">{job.title}</h2>
 
-          <div className="job-meta">
-            <div className="job-meta-item">
-              <span className="meta-icon">📍</span>
-              <span className="meta-text">{job.location}</span>
+        {/* job-card-body: mb-7 */}
+        <div className="mb-7">
+          {/* job-title: gradient text, 28px, bold */}
+          <h2
+            className="text-[28px] font-bold m-0 mb-5 leading-[1.3] bg-clip-text text-transparent max-sm:text-2xl"
+            style={{ backgroundImage: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
+          >
+            {job.title}
+          </h2>
+
+          {/* job-meta: flex gap-6 mb-5 flex-wrap */}
+          <div className="flex gap-6 mb-5 flex-wrap max-sm:gap-3">
+            {/* job-meta-item: flex items-center gap-2 bg-white px-4 py-2.5 rounded-xl shadow-sm border border-gray-200 */}
+            <div className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.05)] border border-gray-200 max-sm:px-3 max-sm:py-2">
+              <span className="text-[18px] max-sm:text-base">📍</span>
+              <span className="text-[15px] font-semibold text-gray-700 max-sm:text-sm">{job.location}</span>
             </div>
-            <div className="job-meta-item">
-              <span className="meta-icon">💰</span>
-              <span className="meta-text">{job.salary}</span>
+            <div className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.05)] border border-gray-200 max-sm:px-3 max-sm:py-2">
+              <span className="text-[18px] max-sm:text-base">💰</span>
+              <span className="text-[15px] font-semibold text-gray-700 max-sm:text-sm">{job.salary}</span>
             </div>
             {job.experience && (
-              <div className="job-meta-item">
-                <span className="meta-icon">🧑‍💼</span>
-                <span className="meta-text">{job.experience}</span>
+              <div className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.05)] border border-gray-200 max-sm:px-3 max-sm:py-2">
+                <span className="text-base">🧑‍💼</span>
+                <span className="text-[15px] font-semibold text-gray-700 max-sm:text-sm">{job.experience}</span>
               </div>
             )}
           </div>
 
-          <div className="job-description">
-            <p>
-              {showFullDesc ? job.description : shortDesc}
-              {hasMore && !showFullDesc && '...'}
-            </p>
+          {/* job-description: mt-5 leading-[1.7] text-gray-600 text-[15px] bg-white p-5 rounded-2xl border border-gray-200 shadow-sm */}
+          <div className="mt-5 leading-[1.7] text-gray-600 text-[15px] bg-white p-5 rounded-2xl border border-gray-200 shadow-[0_2px_8px_rgba(0,0,0,0.04)] max-sm:text-sm max-sm:p-4">
+            <p className="m-0">{showFullDesc ? job.description : shortDesc}{hasMore && !showFullDesc && '...'}</p>
             {hasMore && (
-              <button className="read-more-btn" onClick={() => setShowFullDesc(!showFullDesc)}>
+              /* read-more-btn */
+              <button
+                className="bg-transparent border-none text-[#667eea] text-[13px] font-semibold cursor-pointer p-0 pt-1 mt-1 block hover:underline"
+                onClick={e => { e.stopPropagation(); setShowFullDesc(!showFullDesc); }}
+              >
                 {showFullDesc ? 'Show less ▲' : 'Read more ▼'}
               </button>
             )}
           </div>
 
-          {/* Requirements */}
-          {job.requirements && job.requirements.length > 0 && (
-            <div className="job-requirements">
-              <p className="requirements-label">🛠 Required Skills:</p>
-              <div className="requirements-list">
+          {/* job-requirements */}
+          {job.requirements?.length > 0 && (
+            <div className="mt-4">
+              {/* requirements-label */}
+              <p className="text-[13px] font-bold text-gray-600 m-0 mb-2">🛠 Required Skills:</p>
+              {/* requirements-list */}
+              <div className="flex flex-wrap gap-2">
                 {job.requirements.map((req, i) => (
-                  <span key={i} className="requirement-tag">{req}</span>
+                  /* requirement-tag: amber gradient pill */
+                  <span
+                    key={i}
+                    className="px-3 py-1 rounded-[20px] text-xs font-semibold border border-yellow-300 text-yellow-800"
+                    style={{ background: 'linear-gradient(135deg, #fef3c7, #fde68a)' }}
+                  >
+                    {req}
+                  </span>
                 ))}
               </div>
             </div>
           )}
 
-          <div className="job-tags">
-            {job.tags && job.tags.length > 0
-              ? job.tags.map((tag, i) => <span key={i} className="job-tag">{tag}</span>)
-              : <><span className="job-tag">Full-time</span><span className="job-tag">India</span></>
+          {/* job-tags: flex gap-2.5 mt-5 flex-wrap */}
+          <div className="flex gap-2.5 mt-5 flex-wrap">
+            {job.tags?.length > 0
+              ? job.tags.map((tag, i) => (
+                  /* job-tag: indigo/purple gradient pill */
+                  <span
+                    key={i}
+                    className="px-4 py-2 rounded-[20px] text-[13px] font-semibold border border-indigo-200 text-indigo-600"
+                    style={{ background: 'linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 100%)' }}
+                  >
+                    {tag}
+                  </span>
+                ))
+              : (
+                <>
+                  <span className="px-4 py-2 rounded-[20px] text-[13px] font-semibold border border-indigo-200 text-indigo-600" style={{ background: 'linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 100%)' }}>Full-time</span>
+                  <span className="px-4 py-2 rounded-[20px] text-[13px] font-semibold border border-indigo-200 text-indigo-600" style={{ background: 'linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 100%)' }}>India</span>
+                </>
+              )
             }
           </div>
 
-          {/* In-app Apply button */}
+          {/* btn-apply-now: full-width gradient button */}
           <button
-            className="btn-apply-now"
-            onClick={() => setShowApplyModal(true)}
-            aria-label={`Apply for ${job.title} at ${job.company}`}
+            className="block w-full mt-[18px] px-6 py-3.5 text-white text-[15px] font-bold border-none rounded-[14px] cursor-pointer transition-all duration-[250ms] ease-in-out text-center tracking-[0.3px] shadow-[0_4px_14px_rgba(102,126,234,0.4)] hover:-translate-y-[3px] hover:shadow-[0_8px_20px_rgba(102,126,234,0.5)] active:-translate-y-px focus-visible:outline-[3px] focus-visible:outline-[#667eea] focus-visible:outline-offset-[3px]"
+            style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
+            onClick={e => { e.stopPropagation(); setShowApplyModal(true); }}
           >
             🚀 Apply Now — via TINCLO
           </button>
         </div>
 
-        <div className="job-card-actions">
-          <button className="btn btn-dislike" onClick={() => onDislike(job._id || job.id)} aria-label="Pass">
-            <span className="btn-icon">✕</span>
-            <span className="btn-text">Pass</span>
-          </button>
-          <button className="btn btn-like" onClick={() => onLike(job._id || job.id)} aria-label="Like">
-            <span className="btn-icon">❤️</span>
-            <span className="btn-text">Like</span>
-          </button>
+        {/* swipe-hint: flex justify-between pt-3 border-t border-dashed border-gray-200 mt-4 */}
+        <div className="flex justify-between pt-3 border-t border-dashed border-gray-200 mt-4">
+          {/* swipe-hint-left */}
+          <span className="text-[11px] text-red-400 font-medium">← Swipe left to pass</span>
+          {/* swipe-hint-right */}
+          <span className="text-[11px] text-green-400 font-medium">Swipe right to like →</span>
         </div>
       </div>
 
       {showApplyModal && (
-        <ApplyModal
-          job={job}
-          currentUser={currentUser}
-          onClose={() => setShowApplyModal(false)}
-        />
+        <ApplyModal job={job} currentUser={currentUser} onClose={() => setShowApplyModal(false)} />
       )}
     </>
   );

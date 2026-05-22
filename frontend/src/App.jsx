@@ -7,7 +7,8 @@ import { StateManager } from './state/StateManager';
 import { StorageService } from './services/StorageService';
 import ApiService from './services/ApiService';
 import MigrationService from './services/MigrationService';
-import './App.css';
+import SocketService from './services/SocketService';
+
 
 // Check if user is logged in
 const getCurrentUser = () => {
@@ -51,7 +52,7 @@ export const App = () => {
         setError(null);
 
         const user = getCurrentUser();
-        
+
         if (user) {
           // Run migration first
           const storageService = new StorageService();
@@ -84,6 +85,35 @@ export const App = () => {
     initializeApp();
   }, [stateManager]);
 
+  // Connect socket when user logs in and listen for real-time notifications
+  useEffect(() => {
+    if (currentUser) {
+      SocketService.connect(currentUser.id);
+
+      SocketService.onNotification((notification) => {
+        try {
+          const stored = JSON.parse(localStorage.getItem('tinclo_notifications') || '[]');
+          const newNotif = {
+            id: notification.id || Date.now(),
+            type: notification.type || 'system',
+            title: notification.title,
+            message: notification.message,
+            time: 'Just now',
+            read: false,
+            icon: notification.icon || '🔔',
+          };
+          localStorage.setItem('tinclo_notifications', JSON.stringify([newNotif, ...stored]));
+        } catch (e) {
+          console.warn('Failed to store notification:', e);
+        }
+      });
+
+      return () => {
+        SocketService.offNotification();
+      };
+    }
+  }, [currentUser]);
+
   const handleNavigate = (view) => {
     stateManager.switchView(view);
   };
@@ -97,6 +127,8 @@ export const App = () => {
 
     try {
       await stateManager.addMatch(job);
+      // Emit real-time notification
+      SocketService.emitJobLiked(currentUser.id, job.title, job.company);
     } catch (err) {
       setError(err.message);
       setTimeout(() => setError(null), 5000);
@@ -133,18 +165,20 @@ export const App = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('tinclo_current_user');
+    localStorage.removeItem('tinclo_token');
+    SocketService.disconnect();
     setCurrentUser(null);
     navigate('/');
   };
 
   if (loading) {
     return (
-      <div className="app">
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>Loading Job Swipe Matcher...</p>
+      <div className="flex flex-col min-h-screen">
+        <div className="flex flex-col items-center justify-center min-h-screen px-5 text-center" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+          <div className="w-[60px] h-[60px] border-[5px] border-white/30 border-t-white rounded-full animate-spin-slow mb-6" />
+          <p className="text-lg text-white font-medium my-2.5">Loading Job Swipe Matcher...</p>
           {migrationStatus && (
-            <p className="migration-status">
+            <p className="text-sm text-white/80 italic">
               Migrating your saved jobs... ({migrationStatus.success} completed)
             </p>
           )}
@@ -155,18 +189,21 @@ export const App = () => {
 
   if (error && !state.jobs.length) {
     return (
-      <div className="app">
-        <div className="error-container">
-          <h2>Unable to Load Application</h2>
-          <p>{error}</p>
-          <button onClick={() => window.location.reload()}>Retry</button>
+      <div className="flex flex-col min-h-screen">
+        <div className="flex flex-col items-center justify-center min-h-screen px-5 text-center" style={{ background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)' }}>
+          <h2 className="text-white mb-4 text-[2rem] font-bold">Unable to Load Application</h2>
+          <p className="text-white/90 mb-6 max-w-[500px] text-[1.1rem]">{error}</p>
+          <button
+            className="px-8 py-3.5 text-base font-bold bg-white text-[#ee5a24] border-none rounded-xl cursor-pointer transition-all shadow-[0_4px_15px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(0,0,0,0.3)]"
+            onClick={() => window.location.reload()}
+          >Retry</button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="app">
+    <div className="min-h-screen flex flex-col">
       <Navigation
         currentView={state.currentView}
         matchCount={state.matches.length}
@@ -176,46 +213,56 @@ export const App = () => {
       />
 
       {error && (
-        <div className="error-banner">
+        <div className="text-white px-5 py-3.5 text-center font-semibold animate-slide-down shadow-[0_2px_10px_rgba(238,90,36,0.3)]"
+          style={{ background: 'linear-gradient(135deg, #ff6b6b, #ee5a24)' }}>
           {error}
         </div>
       )}
 
       {migrationStatus && migrationStatus.success > 0 && (
-        <div className="migration-banner">
+        <div className="text-white px-5 py-3.5 text-center font-semibold animate-slide-down"
+          style={{ background: 'linear-gradient(135deg, #48bb78, #38a169)' }}>
           Successfully migrated {migrationStatus.success} saved job{migrationStatus.success !== 1 ? 's' : ''} from local storage!
           {migrationStatus.errors > 0 && ` (${migrationStatus.errors} failed)`}
         </div>
       )}
 
       {showAuthModal && (
-        <div className="auth-modal-overlay" onClick={() => setShowAuthModal(false)}>
-          <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setShowAuthModal(false)}>×</button>
-            <h2>Sign Up Required</h2>
-            <p>You need to create an account to like jobs and apply for positions.</p>
-            <div className="modal-actions">
-              <button 
-                className="btn-primary" 
-                onClick={() => navigate('/signup')}
-              >
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[1000] animate-fade-in backdrop-blur-sm"
+          onClick={() => setShowAuthModal(false)}>
+          <div className="bg-white rounded-3xl px-10 py-12 max-w-[480px] w-[90%] shadow-[0_30px_80px_rgba(0,0,0,0.4)] relative animate-slide-up text-center border-t-[5px] border-indigo-500"
+            onClick={(e) => e.stopPropagation()}>
+            <button
+              className="absolute top-4 right-4 bg-gray-50 border-none text-2xl text-gray-500 cursor-pointer w-10 h-10 flex items-center justify-center rounded-full transition-all hover:bg-gray-100 hover:text-gray-700 hover:rotate-90"
+              onClick={() => setShowAuthModal(false)}>×</button>
+            <h2 className="text-[1.875rem] font-extrabold m-0 mb-4 bg-gradient-to-br from-indigo-500 to-purple-700 bg-clip-text text-transparent">
+              Sign Up Required
+            </h2>
+            <p className="text-base text-gray-500 m-0 mb-8 leading-relaxed">
+              You need to create an account to like jobs and apply for positions.
+            </p>
+            <div className="flex gap-4 mb-6">
+              <button
+                className="flex-1 py-4 text-base font-bold border-none rounded-xl cursor-pointer transition-all text-white shadow-[0_4px_15px_rgba(102,126,234,0.4)] hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(102,126,234,0.5)]"
+                style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
+                onClick={() => navigate('/signup')}>
                 Create Account
               </button>
-              <button 
-                className="btn-secondary" 
-                onClick={() => navigate('/login')}
-              >
+              <button
+                className="flex-1 py-4 text-base font-bold bg-white text-indigo-500 border-2 border-indigo-500 rounded-xl cursor-pointer transition-all hover:bg-indigo-50 hover:-translate-y-0.5"
+                onClick={() => navigate('/login')}>
                 Login
               </button>
             </div>
-            <p className="modal-footer">
+            <p className="text-sm text-gray-400 m-0">
               Browse jobs freely, but sign up to save your favorites!
             </p>
           </div>
         </div>
       )}
 
-      <main className="app-main">
+      <main className="flex-1 px-5 py-8 min-h-[calc(100vh-70px)]"
+        style={{ background: 'linear-gradient(135deg, #f0f4ff 0%, #faf0ff 50%, #f0fff4 100%)' }}>
         {state.currentView === 'browser' ? (
           <JobBrowser
             jobs={state.jobs}
@@ -225,6 +272,7 @@ export const App = () => {
             onNavigateToMatches={() => handleNavigate('matches')}
             isAuthenticated={!!currentUser}
             currentUser={currentUser}
+            likedJobIds={state.matches.map(m => m.job.id || m.job._id).filter(Boolean)}
           />
         ) : (
           <MatchesView
