@@ -95,7 +95,6 @@ const AdminLogin = () => {
         {/* Hint */}
         <div className="mt-6 p-3.5 bg-white/5 rounded-xl border border-white/[0.08] text-center">
           <p className="text-white/40 text-[11px] uppercase tracking-wide m-0 mb-1.5">Default credentials:</p>
-          <code className="text-violet-400 text-xs font-mono">admin@tinclo.com / Admin@2026</code>
         </div>
 
         <button onClick={() => navigate('/')}

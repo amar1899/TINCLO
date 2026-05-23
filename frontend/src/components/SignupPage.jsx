@@ -149,10 +149,7 @@ const SignupPage = () => {
               <div className="flex items-center gap-3 my-3.5 text-gray-300 text-xs">
                 <span className="flex-1 h-px bg-gray-200" />or<span className="flex-1 h-px bg-gray-200" />
               </div>
-              <a href="/admin/login"
-                className="flex items-center justify-center gap-1.5 w-full py-2.5 px-4 bg-transparent border border-gray-200 rounded-lg text-gray-600 text-sm font-semibold no-underline transition-all hover:border-purple-700 hover:text-purple-700 hover:bg-purple-50 mb-4">
-                🛡️ Admin Login
-              </a>
+            
               <div className="inline-flex items-center gap-2 px-5 py-3 bg-gray-50 rounded-full text-sm text-gray-600 font-medium">
                 <svg className="w-4 h-4 text-green-500" viewBox="0 0 24 24" fill="none">
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="currentColor" strokeWidth="2"/>
