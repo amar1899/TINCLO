@@ -142,10 +142,7 @@ const LoginPage = () => {
             <div className="flex items-center gap-3 my-3.5 text-gray-300 text-xs">
               <span className="flex-1 h-px bg-gray-200" />or<span className="flex-1 h-px bg-gray-200" />
             </div>
-            <a href="/admin/login"
-              className="flex items-center justify-center gap-1.5 w-full py-2.5 px-4 bg-transparent border border-gray-200 rounded-lg text-gray-600 text-sm font-semibold no-underline transition-all hover:border-purple-700 hover:text-purple-700 hover:bg-purple-50">
-              🛡️ Admin Login
-            </a>
+            
           </div>
         </div>
 
