@@ -1,0 +1,51 @@
+/* Built for Job Seekers Section */
+.built-for-section {
+  padding: 80px 3rem;
+  margin-top: 60px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.built-for-container {
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.built-for-heading {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 3rem;
+  color: white;
+}
+
+.built-for-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.built-for-item {
+  font-size: 1.2rem;
+  line-height: 1.6;
+  color: white;
+  opacity: 0.95;
+  padding: 0.5rem 0;
+}
+
+@media (max-width: 768px) {
+  .built-for-section {
+    padding: 60px 1.5rem;
+    margin-top: 40px;
+  }
+
+  .built-for-heading {
+    font-size: 2rem;
+  }
+
+  .built-for-item {
+    font-size: 1rem;
+  }
+}

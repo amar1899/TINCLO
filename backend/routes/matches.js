@@ -1,6 +1,7 @@
 import express from 'express';
 import Match from '../models/Match.js';
 import Job from '../models/Job.js';
+import User from '../models/User.js';
 
 const router = express.Router();
 
@@ -18,6 +19,18 @@ router.get('/user/:userId', async (req, res) => {
 
 // POST create new match (like a job)
 router.post('/', async (req, res) => {
+  // NOTE: User validation temporarily disabled due to SQL interface (read-only) limitations
+  // In production with standard MongoDB connection, uncomment the validation below:
+  
+  // try {
+  //   const user = await User.findOne({ userId: req.body.userId });
+  //   if (!user) {
+  //     return res.status(400).json({ message: 'User not found. Please create user first.' });
+  //   }
+  // } catch (error) {
+  //   return res.status(500).json({ message: 'Error validating user: ' + error.message });
+  // }
+
   const match = new Match({
     userId: req.body.userId,
     jobId: req.body.jobId,

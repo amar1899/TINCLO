@@ -4,7 +4,9 @@ const matchSchema = new mongoose.Schema({
   userId: {
     type: String,
     required: true,
-    index: true
+    index: true,
+    // Note: userId references User.userId (String), not User._id (ObjectId)
+    // This maintains compatibility with existing data
   },
   jobId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -14,6 +16,14 @@ const matchSchema = new mongoose.Schema({
   applied: {
     type: Boolean,
     default: false
+  },
+  applicationStatus: {
+    type: String,
+    enum: ['pending', 'selected', 'rejected'],
+    default: 'pending'
+  },
+  statusUpdatedAt: {
+    type: Date
   },
   matchedAt: {
     type: Date,
